@@ -10,6 +10,8 @@
 //! - [`poly`] — Polynomials over Z_q\[X\]/(X^N+1)
 //! - [`rns`] — Multi-prime CRT (Residue Number System)
 
+#![warn(missing_docs)]
+
 /// Errors returned by NTT context construction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NttError {
@@ -18,7 +20,12 @@ pub enum NttError {
     /// q must be prime.
     NotPrime(u64),
     /// q must satisfy q ≡ 1 (mod 2N) for NTT.
-    NotNttFriendly { q: u64, n: usize },
+    NotNttFriendly {
+        /// The modulus that failed the NTT-friendly check.
+        q: u64,
+        /// The polynomial size N.
+        n: usize,
+    },
     /// q must be < 2^28 for the 32-bit pipeline.
     PrimeTooLarge(u64),
 }

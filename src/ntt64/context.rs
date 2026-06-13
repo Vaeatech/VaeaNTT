@@ -68,9 +68,9 @@ impl Ntt64Context {
     ///   and satisfy q ≡ 1 (mod 2N)
     ///
     /// # Errors
-    /// - [`NttError::InvalidSize`] if `n` is not a power of 2 ≥ 2
-    /// - [`NttError::NotPrime`] if the modulus is not prime
-    /// - [`NttError::NotNttFriendly`] if `q − 1` is not divisible by `2N`
+    /// - [`crate::NttError::InvalidSize`] if `n` is not a power of 2 ≥ 2
+    /// - [`crate::NttError::NotPrime`] if the modulus is not prime
+    /// - [`crate::NttError::NotNttFriendly`] if `q − 1` is not divisible by `2N`
     pub fn try_new(n: usize, arith: Ntt64Arith) -> Result<Self, crate::NttError> {
         if n < 2 || !n.is_power_of_two() {
             return Err(crate::NttError::InvalidSize(n));

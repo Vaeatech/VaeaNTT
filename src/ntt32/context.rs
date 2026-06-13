@@ -74,10 +74,10 @@ impl Ntt32Context {
     /// - `q` — prime < 2^28, must satisfy `q ≡ 1 (mod 2N)`
     ///
     /// # Errors
-    /// - [`NttError::InvalidSize`] if `n` is not a power of 2 ≥ 2
-    /// - [`NttError::PrimeTooLarge`] if `q ≥ 2^28`
-    /// - [`NttError::NotPrime`] if `q` is not prime
-    /// - [`NttError::NotNttFriendly`] if `(q - 1)` is not divisible by `2N`
+    /// - [`crate::NttError::InvalidSize`] if `n` is not a power of 2 ≥ 2
+    /// - [`crate::NttError::PrimeTooLarge`] if `q ≥ 2^28`
+    /// - [`crate::NttError::NotPrime`] if `q` is not prime
+    /// - [`crate::NttError::NotNttFriendly`] if `(q - 1)` is not divisible by `2N`
     pub fn try_new(n: usize, q: u32) -> Result<Self, crate::NttError> {
         if n < 2 || !n.is_power_of_two() {
             return Err(crate::NttError::InvalidSize(n));
