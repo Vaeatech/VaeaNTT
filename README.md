@@ -124,4 +124,4 @@ cargo bench --bench vs_concrete_ntt # Competitive benchmarks
 
 AGPL-3.0-or-later. See [LICENSE](LICENSE) for details.
 
-For commercial licensing, contact: [TODO]
+For commercial licensing, contact: alexis@veae.io

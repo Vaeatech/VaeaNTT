@@ -76,7 +76,7 @@ pub fn is_prime(n: u64) -> bool {
 /// Raw modular exponentiation: `base^exp mod modulus`.
 ///
 /// Uses square-and-multiply with u128 intermediates.
-/// This is a standalone version that does not require an [`Ntt64Arith`] context.
+/// This is a standalone version that does not require an `Ntt64Arith` context.
 #[inline]
 fn mod_pow_raw(mut base: u64, mut exp: u64, modulus: u64) -> u64 {
     if modulus == 1 {

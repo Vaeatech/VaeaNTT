@@ -2,7 +2,7 @@
 name = "vaea-ntt"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.73"
+rust-version = "1.87"
 description = "High-performance NTT engine for post-quantum cryptography. ARM NEON native, 28-bit and 64-bit prime pipelines."
 license = "AGPL-3.0-or-later"
 repository = "https://github.com/veae/vaea-ntt"

@@ -12,7 +12,7 @@ If you discover a security vulnerability in VaeaNTT, **please do not open a publ
 
 Instead, report it privately:
 
-1. **Email**: [TODO: security contact email]
+1. **Email**: security@veae.io
 2. **Subject**: `[VaeaNTT Security] <brief description>`
 3. **Include**:
    - Description of the vulnerability
