@@ -1,0 +1,41 @@
+[package]
+name = "vaea-ntt"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.73"
+description = "High-performance NTT engine for post-quantum cryptography. ARM NEON native, 28-bit and 64-bit prime pipelines."
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/veae/vaea-ntt"
+keywords = ["ntt", "post-quantum", "cryptography", "neon", "arm"]
+categories = ["cryptography", "algorithms", "no-std"]
+
+[features]
+default = []
+rand = ["dep:rand", "dep:rand_distr"]
+
+[dependencies]
+rand = { version = "0.8", optional = true }
+rand_distr = { version = "0.4", optional = true }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+concrete-ntt = "0.2"
+rand = "0.8"
+rand_distr = "0.4"
+vaea-ntt = { path = ".", features = ["rand"] }
+
+[[bench]]
+name = "ntt32_bench"
+harness = false
+
+[[bench]]
+name = "ntt64_bench"
+harness = false
+
+[[bench]]
+name = "vs_concrete_ntt"
+harness = false
+
+[[bench]]
+name = "pq_bench"
+harness = false
