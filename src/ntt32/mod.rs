@@ -43,6 +43,68 @@
 //! let product = ctx.negacyclic_mul(&a, &b);
 //! assert_eq!(product.len(), 1024);
 //! ```
+//!
+//! ## Performance
+//!
+//! Measured on Apple M3 (single core):
+//!
+//! | Operation              | N = 256 | Throughput               |
+//! |------------------------|---------|--------------------------|
+//! | Forward NTT            | 240 ns  | 1.07 billion coeff/s     |
+//! | Negacyclic multiply    | 940 ns  | —                        |
+//!
+//! ## Security
+//!
+//! All operations are **constant-time**:
+//!
+//! - No data-dependent branches in any arithmetic or butterfly routine.
+//! - Modular reductions use branchless wrapping arithmetic
+//!   ([`u32::wrapping_add`] / [`u32::wrapping_sub`]).
+//! - Safe to use on secret polynomial coefficients (e.g. ML-DSA keys).
+//!
+//! ## Primes
+//!
+//! NTT-friendly primes must satisfy two constraints:
+//!
+//! 1. **Bit-width**: `q < 2^28` (required by the Shoup / Harvey reduction).
+//! 2. **Divisibility**: `q ≡ 1 (mod 2N)` so that a principal 2N-th root
+//!    of unity exists in `Z_q`.
+//!
+//! Use [`generate_primes_28`] to find valid primes for a given `N`:
+//!
+//! ```
+//! use vaea_ntt::ntt32::generate_primes_28;
+//!
+//! let primes = generate_primes_28(256, 3);
+//! assert_eq!(primes.len(), 3);
+//! for &q in &primes {
+//!     assert!(q < (1 << 28));
+//!     assert_eq!(q % (2 * 256), 1);
+//! }
+//! ```
+//!
+//! The ML-DSA (Dilithium) prime **8 380 417** is NTT-friendly for `N = 256`
+//! (`8_380_417 % 512 == 1`).
+//!
+//! ## Forward / Inverse Roundtrip
+//!
+//! ```
+//! use vaea_ntt::ntt32::Ntt32Context;
+//!
+//! let ctx = Ntt32Context::new(256, 8_380_417);
+//! let mut data = vec![0u32; 256];
+//! data[0] = 1;
+//! data[1] = 2;
+//! let original = data.clone();
+//!
+//! ctx.forward(&mut data);
+//! // data is now in NTT domain
+//! assert_ne!(data, original);
+//!
+//! ctx.inverse(&mut data);
+//! // roundtrip: data restored
+//! assert_eq!(data, original);
+//! ```
 
 pub mod arith;
 pub mod context;

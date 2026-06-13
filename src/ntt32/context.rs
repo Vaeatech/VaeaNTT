@@ -204,9 +204,10 @@ impl Ntt32Context {
         }
     }
 
-    /// Applies the NTT inverse transform in-place.
+    /// Applies the NTT inverse transform in-place (with N⁻¹ normalization).
     ///
-    /// On `aarch64`, dispatches to the NEON implementation with lazy normalization.
+    /// Output coefficients are fully normalized to `[0, q)`.
+    /// On `aarch64`, dispatches to the NEON implementation.
     /// On other architectures, uses the scalar Shoup NTT.
     #[inline]
     pub fn inverse(&self, data: &mut [u32]) {

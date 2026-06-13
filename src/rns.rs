@@ -201,7 +201,9 @@ impl RnsPoly {
         self.level -= 1;
     }
 
-    /// Converts all components from NTT domain to coefficient domain.
+    /// Converts all components from coefficient domain to NTT domain.
+    ///
+    /// Components already in NTT domain are skipped.
     pub fn forward_all(&mut self, ctx: &RnsContext) {
         for i in 0..self.level {
             if !self.components[i].is_ntt {
@@ -211,6 +213,8 @@ impl RnsPoly {
     }
 
     /// Converts all components from NTT domain to coefficient domain.
+    ///
+    /// Components already in coefficient domain are skipped.
     pub fn inverse_all(&mut self, ctx: &RnsContext) {
         for i in 0..self.level {
             if self.components[i].is_ntt {
