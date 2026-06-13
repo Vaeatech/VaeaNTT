@@ -17,27 +17,25 @@
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
 
-//! # 64-bit NTT Pipeline
-//!
-//! High-performance NTT for 60–62 bit NTT-friendly primes, compatible with
-//! SEAL, OpenFHE, and general FHE libraries.
-//!
-//! ## Modules
-//!
-//! - [`arith`] — Modular arithmetic (Barrett, Montgomery, add/sub)
-//! - [`prime`] — Prime generation and primality testing
-//! - [`context`] — NTT context with precomputed twiddle tables
+fn main() {
+    #[cfg(target_arch = "aarch64")]
+    {
+        // PQClean aarch64 NTT assembly
+        cc::Build::new()
+            .file("pqclean_ntt/ntt.c")
+            .file("pqclean_ntt/__asm_NTT.S")
+            .file("pqclean_ntt/__asm_iNTT.S")
+            .include("pqclean_ntt")
+            .flag("-O3")
+            .compile("pqclean_ntt");
 
-pub mod arith;
-pub mod context;
-pub mod prime;
-
-// Re-exports for convenience
-pub use arith::{
-    from_montgomery, mod_add, mod_inv, mod_mul_barrett, mod_mul_mont, mod_pow, mod_sub,
-    to_montgomery, Ntt64Arith, PRIME_60_1, PRIME_60_2, PRIME_60_3, PRIME_62_1, PRIME_SEAL,
-};
-
-pub use prime::{find_primitive_root, generate_primes_60, is_prime};
-
-pub use context::Ntt64Context;
+        // mlkem-native SLOTHY-optimized aarch64 NTT assembly
+        cc::Build::new()
+            .file("mlkem_ntt/wrapper.c")
+            .file("mlkem_ntt/ntt_aarch64_asm.S")
+            .file("mlkem_ntt/intt_aarch64_asm.S")
+            .include("mlkem_ntt")
+            .flag("-O3")
+            .compile("mlkem_ntt");
+    }
+}

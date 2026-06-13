@@ -1,3 +1,22 @@
+// Copyright (C) 2024-2026 Vaea SAS
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This file is part of VaeaNTT.
+//
+// VaeaNTT is free software: you can redistribute it and/or modify it under
+// the terms of the GNU Affero General Public License as published by the
+// Free Software Foundation, either version 3 of the License, or (at your
+// option) any later version.
+//
+// VaeaNTT is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+// License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
+
+
 //! # Ntt32Context — Unified NTT Context for 28-bit Primes
 //!
 //! Combines the root table from `NttSmallCtx` with the Shoup precomputed
@@ -53,11 +72,20 @@ pub struct Ntt32Context {
     /// Shoup quotients for forward root powers: `floor(root_powers[i] · 2^32 / q)`
     pub root_powers_shoup: Vec<u32>,
 
+    /// Signed doubling-multiply-high quotients for forward root powers (aarch64 NEON).
+    /// `root_powers_qmulh[i] = floor(root_powers[i] · 2^31 / q)` as i32.
+    #[cfg(target_arch = "aarch64")]
+    pub root_powers_qmulh: Vec<i32>,
+
     /// Inverse root powers for INTT
     pub inv_root_powers: Vec<u32>,
 
     /// Shoup quotients for inverse root powers
     pub inv_root_powers_shoup: Vec<u32>,
+
+    /// Signed doubling-multiply-high quotients for inverse root powers (aarch64 NEON).
+    #[cfg(target_arch = "aarch64")]
+    pub inv_root_powers_qmulh: Vec<i32>,
 
     /// N^{-1} mod q — normalization factor for INTT
     pub n_inv: u32,
@@ -111,6 +139,20 @@ impl Ntt32Context {
 
         let n_inv_shoup = compute_shoup(base.n_inv, q);
 
+        #[cfg(target_arch = "aarch64")]
+        let root_powers_qmulh: Vec<i32> = base
+            .root_powers
+            .iter()
+            .map(|&w| ((w as u64 * (1u64 << 31)) / q as u64) as i32)
+            .collect();
+
+        #[cfg(target_arch = "aarch64")]
+        let inv_root_powers_qmulh: Vec<i32> = base
+            .inv_root_powers
+            .iter()
+            .map(|&w| ((w as u64 * (1u64 << 31)) / q as u64) as i32)
+            .collect();
+
         Ok(Self {
             n,
             log_n: base.log_n,
@@ -118,8 +160,12 @@ impl Ntt32Context {
             two_q: 2 * q,
             root_powers: base.root_powers,
             root_powers_shoup,
+            #[cfg(target_arch = "aarch64")]
+            root_powers_qmulh,
             inv_root_powers: base.inv_root_powers,
             inv_root_powers_shoup,
+            #[cfg(target_arch = "aarch64")]
+            inv_root_powers_qmulh,
             n_inv: base.n_inv,
             n_inv_shoup,
         })
@@ -220,6 +266,8 @@ impl Ntt32Context {
     /// A new vector of length N containing the product.
     pub fn negacyclic_mul(&self, a: &[u32], b: &[u32]) -> Vec<u32> {
         let n = self.n;
+        assert_eq!(a.len(), n, "negacyclic_mul: a.len() must be N");
+        assert_eq!(b.len(), n, "negacyclic_mul: b.len() must be N");
         let mut a_buf = a.to_vec();
         let mut b_buf = b.to_vec();
         let mut result = vec![0u32; n];
@@ -282,6 +330,32 @@ mod tests {
         (0..n)
             .map(|i| ((i as u64 * 314_159_265 + 271_828_182) % q as u64) as u32)
             .collect()
+    }
+
+    #[test]
+    fn test_roundtrip_n2() {
+        // N=2: edge case, must fall back to scalar on NEON
+        let q = 5u32; // smallest NTT-friendly prime for N=2: q ≡ 1 (mod 4), q=5 works
+        let ctx = Ntt32Context::new(2, q);
+        let original = vec![1u32, 3];
+        let mut data = original.clone();
+        ctx.forward(&mut data);
+        assert_ne!(data, original, "NTT forward did nothing for N=2");
+        ctx.inverse(&mut data);
+        assert_eq!(data, original, "NTT roundtrip failed for N=2");
+    }
+
+    #[test]
+    fn test_roundtrip_n4() {
+        // N=4: edge case, must fall back to scalar on NEON
+        let q = 17u32; // q ≡ 1 (mod 8): 17 works
+        let ctx = Ntt32Context::new(4, q);
+        let original = vec![1u32, 5, 9, 13];
+        let mut data = original.clone();
+        ctx.forward(&mut data);
+        assert_ne!(data, original, "NTT forward did nothing for N=4");
+        ctx.inverse(&mut data);
+        assert_eq!(data, original, "NTT roundtrip failed for N=4");
     }
 
     #[test]

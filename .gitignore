@@ -1,6 +1,28 @@
+# Build artifacts
 /target
+
+# Cargo lock (library, not application)
 Cargo.lock
+
+# Editor swap files
 *.swp
 *.swo
 *~
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Benchmark third-party C/ASM sources (not part of the library)
+# These are only needed locally for vs_pqclean and vs_libcrux benchmarks
+/mlkem_ntt/
+/pqclean_ntt/
+
+# Generated documentation (use cargo doc --open to build locally)
+/target/doc/

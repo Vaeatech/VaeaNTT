@@ -1,19 +1,72 @@
+// Copyright (C) 2024-2026 Vaea SAS
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This file is part of VaeaNTT.
+//
+// VaeaNTT is free software: you can redistribute it and/or modify it under
+// the terms of the GNU Affero General Public License as published by the
+// Free Software Foundation, either version 3 of the License, or (at your
+// option) any later version.
+//
+// VaeaNTT is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+// License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
+
+
 //! # VaeaNTT — High-Performance Number Theoretic Transforms
 //!
-//! Production-quality NTT engine for post-quantum cryptography.
-//! ARM NEON native with scalar fallback.
+//! NTT engine for lattice-based cryptography, optimized for ARM NEON (aarch64)
+//! with portable scalar fallback.
 //!
-//! ## Pipelines
+//! ## Quick Start
 //!
-//! - [`ntt32`] — 28-bit primes (< 2²⁸), ultra-fast on ARM NEON
-//! - [`ntt64`] — 60-62 bit primes, compatible with SEAL/OpenFHE/FHE
-//! - [`poly`] — Polynomials over Z_q\[X\]/(X^N+1)
-//! - [`rns`] — Multi-prime CRT (Residue Number System)
+//! ```
+//! use vaea_ntt::ntt32::Ntt32Context;
 //!
-//! ## `no_std` Support
+//! // Any NTT-friendly prime < 2^28
+//! let ctx = Ntt32Context::new(256, 8_380_417);
+//!
+//! let mut data = vec![42u32; 256];
+//! ctx.forward(&mut data);
+//! ctx.inverse(&mut data);
+//! assert!(data.iter().all(|&x| x == 42));
+//! ```
+//!
+//! ## Post-Quantum Presets
+//!
+//! ```
+//! use vaea_ntt::pq::{PqScheme, PqNtt};
+//!
+//! // ML-DSA-65 (FIPS 204) — digital signatures, NIST Level 3
+//! let ntt = PqNtt::new(PqScheme::MlDsa65);
+//! ```
+//!
+//! ## Modules
+//!
+//! | Module | Use case |
+//! |--------|----------|
+//! | [`pq`] | Post-quantum presets for ML-DSA (FIPS 204) |
+//! | [`ntt32`] | 28-bit primes (< 2²⁸), ARM NEON vectorized |
+//! | [`ntt64`] | 60–62 bit primes for FHE (SEAL/OpenFHE compatible) |
+//! | [`poly`] | Polynomials over Z_q\[X\]/(X^N+1) with 64-bit coefficients |
+//! | [`rns`] | Multi-prime CRT (Residue Number System) |
+//!
+//! ## Features
+//!
+//! | Feature | Default | Description |
+//! |---------|---------|-------------|
+//! | `std` | **on** | Enables [`std::error::Error`] impl on [`NttError`] |
+//! | `rand` | off | Random polynomial generation |
+//! | `ffi` | off | C/C++/JS bindings via Diplomat |
+//!
+//! ## `no_std`
 //!
 //! This crate is `no_std` compatible (requires `alloc`).
-//! Enable the `std` feature (on by default) for `std::error::Error` impl.
+//! Disable default features to use without `std`.
 
 #![no_std]
 #![warn(missing_docs)]
@@ -59,6 +112,7 @@ impl std::error::Error for NttError {}
 
 pub mod ntt32;
 pub mod ntt64;
+pub mod pq;
 pub mod poly;
 pub mod rns;
 

@@ -1,3 +1,22 @@
+// Copyright (C) 2024-2026 Vaea SAS
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This file is part of VaeaNTT.
+//
+// VaeaNTT is free software: you can redistribute it and/or modify it under
+// the terms of the GNU Affero General Public License as published by the
+// Free Software Foundation, either version 3 of the License, or (at your
+// option) any later version.
+//
+// VaeaNTT is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+// License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
+
+
 //! # Scalar NTT — Shoup + Harvey Butterfly
 //!
 //! Scalar (non-SIMD) NTT implementation using Shoup's precomputed quotient
@@ -158,6 +177,12 @@ pub fn ntt_forward_scalar(data: &mut [u32], ctx: &super::context::Ntt32Context) 
         "Data length ({}) does not match N ({})",
         data.len(),
         n
+    );
+
+    // Security: verify inputs are in [0, q) — active in debug builds only
+    debug_assert!(
+        data.iter().all(|&x| x < q),
+        "NTT forward: input coefficients must be in [0, q)"
     );
 
     let mut t = n;

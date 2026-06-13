@@ -31,8 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - RnsPoly with component-wise operations
 
 - **Post-quantum coverage** — Validated with NIST standard primes:
-  - ML-KEM (FIPS 203): q = 3329, N = 128
-  - ML-DSA (FIPS 204): q = 8380417, N = 256
+  - ML-DSA (FIPS 204): q = 8380417, N = 256 (full negacyclic NTT)
   - Falcon: q = 12289, N = 512/1024
 
 - **Benchmarks** — 4 Criterion suites:
@@ -49,5 +48,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Constant-time** — DudeCT statistical validation (forward, inverse, negacyclic_mul)
 - **Send + Sync** — Compile-time assertions for thread safety
 
-[Unreleased]: https://github.com/veae/vaea-ntt/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/veae/vaea-ntt/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Vaeatech/VaeaNTT/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Vaeatech/VaeaNTT/releases/tag/v0.1.0

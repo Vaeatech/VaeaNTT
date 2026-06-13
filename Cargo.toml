@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.87"
 description = "High-performance NTT engine for post-quantum cryptography. ARM NEON native, 28-bit and 64-bit prime pipelines."
 license = "AGPL-3.0-or-later"
-repository = "https://github.com/veae/vaea-ntt"
+repository = "https://github.com/Vaeatech/VaeaNTT"
 keywords = ["ntt", "post-quantum", "cryptography", "neon", "arm"]
 categories = ["cryptography", "algorithms", "no-std"]
 
@@ -31,7 +31,11 @@ rand_chacha = "0.3"
 rand_core = "0.5"
 rand_distr = "0.4"
 dudect-bencher = "0.4"
+libcrux-ml-kem = "0.0.9"
 vaea-ntt = { path = ".", features = ["rand"] }
+
+[build-dependencies]
+cc = "1"
 
 [[bench]]
 name = "ntt32_bench"
@@ -47,4 +51,20 @@ harness = false
 
 [[bench]]
 name = "pq_bench"
+harness = false
+
+[[bench]]
+name = "vs_libcrux"
+harness = false
+
+[[bench]]
+name = "butterfly_lab"
+harness = false
+
+[[bench]]
+name = "ntt_lab"
+harness = false
+
+[[bench]]
+name = "vs_pqclean"
 harness = false
