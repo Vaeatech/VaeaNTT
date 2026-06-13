@@ -648,4 +648,15 @@ mod tests {
             "ML-KEM negacyclic multiplication mismatch"
         );
     }
+
+    // Compile-time check: Ntt32Context must be Send + Sync
+    // (required for safe sharing across threads in crypto applications)
+    const _: () = {
+        fn assert_send<T: Send>() {}
+        fn assert_sync<T: Sync>() {}
+        fn check() {
+            assert_send::<super::Ntt32Context>();
+            assert_sync::<super::Ntt32Context>();
+        }
+    };
 }

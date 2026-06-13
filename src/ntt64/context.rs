@@ -652,4 +652,14 @@ mod tests {
         ntt_inverse(&mut data, &ctx);
         assert_eq!(data, original, "NTT roundtrip fails for N=32768");
     }
+
+    // Compile-time check: Ntt64Context must be Send + Sync
+    const _: () = {
+        fn assert_send<T: Send>() {}
+        fn assert_sync<T: Sync>() {}
+        fn check() {
+            assert_send::<super::Ntt64Context>();
+            assert_sync::<super::Ntt64Context>();
+        }
+    };
 }
