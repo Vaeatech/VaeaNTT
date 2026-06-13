@@ -39,18 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `ntt32_bench`: NTT32 pipeline scaling
   - `ntt64_bench`: NTT64 pipeline scaling
   - `pq_bench`: NIST PQ standard primes
-  - `vs_concrete_ntt`: Competitive comparison (1.85× speedup)
+  - `vs_concrete_ntt`: Competitive comparison
 
 - **Error handling** — `NttError` enum with `try_new()` constructors
 - **Documentation** — `#![warn(missing_docs)]`, rustdoc, README
 - **CI** — GitHub Actions (ARM + x86 + macOS, clippy, docs, format, MSRV)
-
-### Performance (Apple M3 Pro)
-
-| Operation | N=256 | N=4096 | N=8192 |
-|-----------|:-----:|:------:|:------:|
-| Forward NTT (28-bit) | 335 ns | 7.42 µs | 15.9 µs |
-| vs concrete-ntt | **1.86×** | **1.83×** | **1.75×** |
+- **no_std** — `#![no_std]` with `alloc`, `std` feature (default)
+- **FFI** — Diplomat bindings for C, C++, JS/WASM
+- **Constant-time** — DudeCT statistical validation (forward, inverse, negacyclic_mul)
+- **Send + Sync** — Compile-time assertions for thread safety
 
 [Unreleased]: https://github.com/veae/vaea-ntt/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/veae/vaea-ntt/releases/tag/v0.1.0
