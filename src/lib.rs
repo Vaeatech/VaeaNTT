@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # VaeaNTT — High-Performance Number Theoretic Transforms
 //!
 //! NTT engine for lattice-based cryptography, optimized for ARM NEON (aarch64)
@@ -112,8 +111,8 @@ impl std::error::Error for NttError {}
 
 pub mod ntt32;
 pub mod ntt64;
-pub mod pq;
 pub mod poly;
+pub mod pq;
 pub mod rns;
 
 #[cfg(feature = "ffi")]

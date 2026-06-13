@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! Integration tests — cross-validate NTT32 pipeline against naive O(N²) computation
 //! and stress-test with randomized inputs.
 

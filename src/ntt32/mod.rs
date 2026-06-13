@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # ntt32 — 28-bit NTT Pipeline
 //!
 //! High-performance Number Theoretic Transform for primes < 2^28.

@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # VaeaNTT vs concrete-ntt — Comparative Benchmark
 //!
 //! **Machine**: Apple M3 Pro (11 cores, 5P+6E, 18GB)

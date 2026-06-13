@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # 28-bit Modular Arithmetic
 //!
 //! Ultra-fast modular operations for primes < 2^28.

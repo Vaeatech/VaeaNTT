@@ -16,7 +16,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
+#![allow(
+    unused_variables,
+    unused_imports,
+    unused_mut,
+    dead_code,
+    clippy::needless_range_loop
+)]
 //! # NTT Lab v2 — Full Forward NTT Variants (Fixed)
 //!
 //! Benchmarks 4 NTT forward strategies with correctness verification:
@@ -40,7 +46,9 @@ struct VqdmulhTwiddles {
 
 impl VqdmulhTwiddles {
     fn new(ctx: &Ntt32Context) -> Self {
-        let root_qmulh: Vec<i32> = ctx.root_powers.iter()
+        let root_qmulh: Vec<i32> = ctx
+            .root_powers
+            .iter()
             .map(|&w| ((w as u64 * (1u64 << 31)) / ctx.q as u64) as i32)
             .collect();
         Self { root_qmulh }
@@ -54,7 +62,10 @@ impl VqdmulhTwiddles {
 #[cfg(target_arch = "aarch64")]
 #[inline(always)]
 unsafe fn shoup_mul_inline(
-    v: uint32x4_t, w: uint32x4_t, w_shoup: uint32x4_t, q: uint32x4_t,
+    v: uint32x4_t,
+    w: uint32x4_t,
+    w_shoup: uint32x4_t,
+    q: uint32x4_t,
 ) -> uint32x4_t {
     let prod_lo = vmull_u32(vget_low_u32(v), vget_low_u32(w_shoup));
     let prod_hi = vmull_high_u32(v, w_shoup);
@@ -69,7 +80,10 @@ unsafe fn shoup_mul_inline(
 #[cfg(target_arch = "aarch64")]
 #[inline(always)]
 unsafe fn shoup_mul_vqdmulh(
-    v: uint32x4_t, w: uint32x4_t, w_qmulh: int32x4_t, q: uint32x4_t,
+    v: uint32x4_t,
+    w: uint32x4_t,
+    w_qmulh: int32x4_t,
+    q: uint32x4_t,
 ) -> uint32x4_t {
     let q_hat = vqdmulhq_s32(vreinterpretq_s32_u32(v), w_qmulh);
     let vw = vmulq_u32(v, w);
@@ -101,9 +115,7 @@ unsafe fn mod_sub(a: uint32x4_t, b: uint32x4_t, q: uint32x4_t) -> uint32x4_t {
 /// Strategy trait: defines how to do Shoup multiply
 #[cfg(target_arch = "aarch64")]
 trait NttMulStrategy {
-    unsafe fn mul4(
-        &self, v: uint32x4_t, twiddle_idx: usize, q: uint32x4_t,
-    ) -> uint32x4_t;
+    unsafe fn mul4(&self, v: uint32x4_t, twiddle_idx: usize, q: uint32x4_t) -> uint32x4_t;
 }
 
 /// Standard Shoup (vmull-based)
@@ -146,9 +158,15 @@ impl<'a> NttMulStrategy for VqdmulhStrategy<'a> {
 
 /// Standard stage-by-stage NTT (matches production but with inlined helpers)
 #[cfg(target_arch = "aarch64")]
-fn ntt_fwd_standard<S: NttMulStrategy>(data: &mut [u32], n: usize, log_n: usize, q: u32, strat: &S) {
+fn ntt_fwd_standard<S: NttMulStrategy>(
+    data: &mut [u32],
+    n: usize,
+    log_n: usize,
+    q: u32,
+    strat: &S,
+) {
     let root_powers_ptr = match strat {
-        _ => {}, // We need the raw root_powers for t=1 and t=2 stages
+        _ => {} // We need the raw root_powers for t=1 and t=2 stages
     };
 
     unsafe {
@@ -178,8 +196,8 @@ fn ntt_fwd_standard<S: NttMulStrategy>(data: &mut [u32], n: usize, log_n: usize,
                 let mut i = 0;
                 while i + 2 <= m {
                     let w0 = strat.mul4(vdupq_n_u32(1), m + i, q_vec); // Dummy — need raw
-                    // For t=2, we need 2 different twiddles — use raw approach
-                    // Fall back to inline for t=2/t=1 (only last 2 stages)
+                                                                       // For t=2, we need 2 different twiddles — use raw approach
+                                                                       // Fall back to inline for t=2/t=1 (only last 2 stages)
                     i += 2;
                     k += 8;
                 }
@@ -229,8 +247,8 @@ fn ntt_fwd_vqdmulh(data: &mut [u32], ctx: &Ntt32Context, tw: &VqdmulhTwiddles) {
                 let mut k = 0;
                 let mut i = 0;
                 while i + 2 <= m {
-                    let w_vec = vcombine_u32(vdup_n_u32(rp[m+i]), vdup_n_u32(rp[m+i+1]));
-                    let wq_vec = vcombine_s32(vdup_n_s32(rq[m+i]), vdup_n_s32(rq[m+i+1]));
+                    let w_vec = vcombine_u32(vdup_n_u32(rp[m + i]), vdup_n_u32(rp[m + i + 1]));
+                    let wq_vec = vcombine_s32(vdup_n_s32(rq[m + i]), vdup_n_s32(rq[m + i + 1]));
                     let raw_lo = vld1q_u32(data.as_ptr().add(k));
                     let raw_hi = vld1q_u32(data.as_ptr().add(k + 4));
                     let u = vcombine_u32(vget_low_u32(raw_lo), vget_low_u32(raw_hi));
@@ -238,10 +256,14 @@ fn ntt_fwd_vqdmulh(data: &mut [u32], ctx: &Ntt32Context, tw: &VqdmulhTwiddles) {
                     let wv = shoup_mul_vqdmulh(v, w_vec, wq_vec, q_vec);
                     let ru = mod_add(u, wv, q_vec);
                     let rv = mod_sub(u, wv, q_vec);
-                    vst1q_u32(data.as_mut_ptr().add(k),
-                        vcombine_u32(vget_low_u32(ru), vget_low_u32(rv)));
-                    vst1q_u32(data.as_mut_ptr().add(k + 4),
-                        vcombine_u32(vget_high_u32(ru), vget_high_u32(rv)));
+                    vst1q_u32(
+                        data.as_mut_ptr().add(k),
+                        vcombine_u32(vget_low_u32(ru), vget_low_u32(rv)),
+                    );
+                    vst1q_u32(
+                        data.as_mut_ptr().add(k + 4),
+                        vcombine_u32(vget_high_u32(ru), vget_high_u32(rv)),
+                    );
                     k += 8;
                     i += 2;
                 }
@@ -285,7 +307,7 @@ fn ntt_fwd_radix4(data: &mut [u32], ctx: &Ntt32Context) {
 
     unsafe {
         let q_vec = vdupq_n_u32(q);
-        let mut t = n;    // full span; first-stage stride = t/2
+        let mut t = n; // full span; first-stage stride = t/2
         let mut m = 1usize;
         let mut stage = 0;
 
@@ -294,7 +316,9 @@ fn ntt_fwd_radix4(data: &mut [u32], ctx: &Ntt32Context) {
             let t1 = t >> 1; // first-stage stride
             let t2 = t >> 2; // second-stage stride
 
-            if t2 < 4 { break; } // can't NEON-vectorize the inner stage
+            if t2 < 4 {
+                break;
+            } // can't NEON-vectorize the inner stage
 
             let mut k = 0;
             for i in 0..m {
@@ -325,9 +349,9 @@ fn ntt_fwd_radix4(data: &mut [u32], ctx: &Ntt32Context) {
                     let wb1 = shoup_mul_inline(b1, w2_vec, w2s_vec, q_vec);
                     let wd1 = shoup_mul_inline(d1, w3_vec, w3s_vec, q_vec);
 
-                    vst1q_u32(data.as_mut_ptr().add(j),           mod_add(a1, wb1, q_vec));
-                    vst1q_u32(data.as_mut_ptr().add(j + t2),      mod_sub(a1, wb1, q_vec));
-                    vst1q_u32(data.as_mut_ptr().add(j + t1),      mod_add(c1, wd1, q_vec));
+                    vst1q_u32(data.as_mut_ptr().add(j), mod_add(a1, wb1, q_vec));
+                    vst1q_u32(data.as_mut_ptr().add(j + t2), mod_sub(a1, wb1, q_vec));
+                    vst1q_u32(data.as_mut_ptr().add(j + t1), mod_add(c1, wd1, q_vec));
                     vst1q_u32(data.as_mut_ptr().add(j + t1 + t2), mod_sub(c1, wd1, q_vec));
 
                     j += 4;
@@ -365,8 +389,8 @@ fn ntt_fwd_radix4(data: &mut [u32], ctx: &Ntt32Context) {
                 let mut k = 0;
                 let mut i = 0;
                 while i + 2 <= m {
-                    let w_vec = vcombine_u32(vdup_n_u32(rp[m+i]), vdup_n_u32(rp[m+i+1]));
-                    let ws_vec = vcombine_u32(vdup_n_u32(rs[m+i]), vdup_n_u32(rs[m+i+1]));
+                    let w_vec = vcombine_u32(vdup_n_u32(rp[m + i]), vdup_n_u32(rp[m + i + 1]));
+                    let ws_vec = vcombine_u32(vdup_n_u32(rs[m + i]), vdup_n_u32(rs[m + i + 1]));
                     let raw_lo = vld1q_u32(data.as_ptr().add(k));
                     let raw_hi = vld1q_u32(data.as_ptr().add(k + 4));
                     let u = vcombine_u32(vget_low_u32(raw_lo), vget_low_u32(raw_hi));
@@ -374,10 +398,14 @@ fn ntt_fwd_radix4(data: &mut [u32], ctx: &Ntt32Context) {
                     let wv = shoup_mul_inline(v, w_vec, ws_vec, q_vec);
                     let ru = mod_add(u, wv, q_vec);
                     let rv = mod_sub(u, wv, q_vec);
-                    vst1q_u32(data.as_mut_ptr().add(k),
-                        vcombine_u32(vget_low_u32(ru), vget_low_u32(rv)));
-                    vst1q_u32(data.as_mut_ptr().add(k + 4),
-                        vcombine_u32(vget_high_u32(ru), vget_high_u32(rv)));
+                    vst1q_u32(
+                        data.as_mut_ptr().add(k),
+                        vcombine_u32(vget_low_u32(ru), vget_low_u32(rv)),
+                    );
+                    vst1q_u32(
+                        data.as_mut_ptr().add(k + 4),
+                        vcombine_u32(vget_high_u32(ru), vget_high_u32(rv)),
+                    );
                     k += 8;
                     i += 2;
                 }
@@ -428,7 +456,7 @@ unsafe fn normalize_binary(mut v: uint32x4_t, q: u32, stages: usize) -> uint32x4
     // max_val = (2*stages + 1) * q. Need ceil(log2(2*stages+1)) steps.
     let max_ratio = 2 * stages + 1; // e.g. 25 for 12 stages
     let q_vec = vdupq_n_u32(q);
-    
+
     if max_ratio >= 16 {
         let q16 = vdupq_n_u32(16 * q);
         let m = vcgeq_u32(v, q16);
@@ -464,8 +492,10 @@ fn ntt_fwd_zero_red(data: &mut [u32], ctx: &Ntt32Context, tw: &VqdmulhTwiddles) 
     let rq = &tw.root_qmulh;
 
     // Verify theorem precondition
-    debug_assert!((2 * log_n + 1) as u64 * q as u64 <= u32::MAX as u64,
-        "Theorem V violated: (2*log_n+1)*q > 2^32");
+    debug_assert!(
+        (2 * log_n + 1) as u64 * q as u64 <= u32::MAX as u64,
+        "Theorem V violated: (2*log_n+1)*q > 2^32"
+    );
 
     unsafe {
         let q_vec = vdupq_n_u32(q);
@@ -487,13 +517,11 @@ fn ntt_fwd_zero_red(data: &mut [u32], ctx: &Ntt32Context, tw: &VqdmulhTwiddles) 
 
                         // === THE 6-INSTRUCTION BUTTERFLY ===
                         // 1. vqdmulhq: signed doubling multiply high
-                        let q_hat = vqdmulhq_s32(
-                            vreinterpretq_s32_u32(v4), wq_vec);
+                        let q_hat = vqdmulhq_s32(vreinterpretq_s32_u32(v4), wq_vec);
                         // 2. vmulq: low product
                         let vw = vmulq_u32(v4, w_vec);
                         // 3. vmlsq: residue (no correction!)
-                        let wv = vmlsq_u32(vw,
-                            vreinterpretq_u32_s32(q_hat), q_vec);
+                        let wv = vmlsq_u32(vw, vreinterpretq_u32_s32(q_hat), q_vec);
                         // 4. vaddq: raw add (no reduction!)
                         let out_add = vaddq_u32(u4, wv);
                         // 5. vaddq: bias for sub
@@ -511,10 +539,8 @@ fn ntt_fwd_zero_red(data: &mut [u32], ctx: &Ntt32Context, tw: &VqdmulhTwiddles) 
                 let mut k = 0;
                 let mut i = 0;
                 while i + 2 <= m {
-                    let w_vec = vcombine_u32(
-                        vdup_n_u32(rp[m+i]), vdup_n_u32(rp[m+i+1]));
-                    let wq_vec = vcombine_s32(
-                        vdup_n_s32(rq[m+i]), vdup_n_s32(rq[m+i+1]));
+                    let w_vec = vcombine_u32(vdup_n_u32(rp[m + i]), vdup_n_u32(rp[m + i + 1]));
+                    let wq_vec = vcombine_s32(vdup_n_s32(rq[m + i]), vdup_n_s32(rq[m + i + 1]));
                     let raw_lo = vld1q_u32(data.as_ptr().add(k));
                     let raw_hi = vld1q_u32(data.as_ptr().add(k + 4));
                     let u = vcombine_u32(vget_low_u32(raw_lo), vget_low_u32(raw_hi));
@@ -526,10 +552,14 @@ fn ntt_fwd_zero_red(data: &mut [u32], ctx: &Ntt32Context, tw: &VqdmulhTwiddles) 
                     let ru = vaddq_u32(u, wv);
                     let rv = vsubq_u32(vaddq_u32(u, two_q), wv);
 
-                    vst1q_u32(data.as_mut_ptr().add(k),
-                        vcombine_u32(vget_low_u32(ru), vget_low_u32(rv)));
-                    vst1q_u32(data.as_mut_ptr().add(k + 4),
-                        vcombine_u32(vget_high_u32(ru), vget_high_u32(rv)));
+                    vst1q_u32(
+                        data.as_mut_ptr().add(k),
+                        vcombine_u32(vget_low_u32(ru), vget_low_u32(rv)),
+                    );
+                    vst1q_u32(
+                        data.as_mut_ptr().add(k + 4),
+                        vcombine_u32(vget_high_u32(ru), vget_high_u32(rv)),
+                    );
                     k += 8;
                     i += 2;
                 }
@@ -564,8 +594,10 @@ fn ntt_fwd_zero_red(data: &mut [u32], ctx: &Ntt32Context, tw: &VqdmulhTwiddles) 
         let mut j = 0;
         while j + 4 <= n {
             let v = vld1q_u32(data.as_ptr().add(j));
-            vst1q_u32(data.as_mut_ptr().add(j),
-                normalize_binary(v, q, log_n as usize));
+            vst1q_u32(
+                data.as_mut_ptr().add(j),
+                normalize_binary(v, q, log_n as usize),
+            );
             j += 4;
         }
     }
@@ -593,7 +625,10 @@ fn bench_ntt_lab(c: &mut Criterion) {
         // 1. BASELINE
         group.bench_function("1_baseline", |b| {
             let mut data = orig.clone();
-            b.iter(|| { data.copy_from_slice(&orig); ctx.forward(&mut data); });
+            b.iter(|| {
+                data.copy_from_slice(&orig);
+                ctx.forward(&mut data);
+            });
         });
 
         // 2. VQDMULH
@@ -604,7 +639,10 @@ fn bench_ntt_lab(c: &mut Criterion) {
             assert_eq!(test, reference, "vqdmulh incorrect N={}", n);
             group.bench_function("2_vqdmulh", |b| {
                 let mut data = orig.clone();
-                b.iter(|| { data.copy_from_slice(&orig); ntt_fwd_vqdmulh(&mut data, &ctx, &tw); });
+                b.iter(|| {
+                    data.copy_from_slice(&orig);
+                    ntt_fwd_vqdmulh(&mut data, &ctx, &tw);
+                });
             });
         }
 
@@ -616,7 +654,10 @@ fn bench_ntt_lab(c: &mut Criterion) {
             assert_eq!(test, reference, "THEOREM V incorrect N={}", n);
             group.bench_function("5_THEOREM_V", |b| {
                 let mut data = orig.clone();
-                b.iter(|| { data.copy_from_slice(&orig); ntt_fwd_zero_red(&mut data, &ctx, &tw); });
+                b.iter(|| {
+                    data.copy_from_slice(&orig);
+                    ntt_fwd_zero_red(&mut data, &ctx, &tw);
+                });
             });
         }
 

@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! Constant-time integration tests for VaeaNTT using DudeCT methodology.
 //!
 //! These tests verify that NTT operations do not leak timing information

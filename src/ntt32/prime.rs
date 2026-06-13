@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # 28-bit NTT-Friendly Prime Generation
 //!
 //! Generates primes of the form `k · 2N + 1` that are < 2^28,

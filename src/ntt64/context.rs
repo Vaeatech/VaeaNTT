@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # NTT Context — Forward and Inverse Transforms
 //!
 //! High-performance Number Theoretic Transform using the Longa-Naehrig ordering
@@ -391,6 +390,7 @@ pub fn ntt_forward_tiled(data: &mut [u64], ctx: &Ntt64Context) {
 ///
 /// Used only in tests to verify NTT correctness.
 #[cfg(test)]
+#[allow(unused_variables, clippy::needless_range_loop, dead_code)]
 fn poly_mul_naive(a: &[u64], b: &[u64], q: u64) -> Vec<u64> {
     let n = a.len();
     assert_eq!(b.len(), n);
@@ -416,6 +416,7 @@ fn poly_mul_naive(a: &[u64], b: &[u64], q: u64) -> Vec<u64> {
 // ===========================================================================
 
 #[cfg(test)]
+#[allow(unused_variables, clippy::needless_range_loop, dead_code)]
 mod tests {
     use super::super::arith::{PRIME_60_1, PRIME_SEAL};
     use super::*;

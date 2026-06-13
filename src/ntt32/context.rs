@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # Ntt32Context — Unified NTT Context for 28-bit Primes
 //!
 //! Combines the root table from `NttSmallCtx` with the Shoup precomputed
@@ -318,6 +317,7 @@ impl Ntt32Context {
 // ===========================================================================
 
 #[cfg(test)]
+#[allow(unused_variables, clippy::needless_range_loop, dead_code)]
 mod tests {
     use super::*;
     use crate::ntt32::prime::generate_primes_28;

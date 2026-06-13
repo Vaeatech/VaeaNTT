@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use vaea_ntt::ntt64::{generate_primes_60, Ntt64Arith, Ntt64Context, PRIME_SEAL};
 

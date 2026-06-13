@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # NEON-Accelerated NTT — Optimized Butterfly Pipeline
 //!
 //! Full NEON implementation of the NTT using ARM NEON SIMD intrinsics.
@@ -53,8 +52,6 @@
 #[cfg(target_arch = "aarch64")]
 use core::arch::aarch64::*;
 
-
-
 // ===========================================================================
 // Barrett normalization — single-pass reduction from [0, Bq) to [0, q)
 // ===========================================================================
@@ -81,7 +78,6 @@ unsafe fn barrett_reduce(v: uint32x4_t, q_vec: uint32x4_t, bc: uint32x4_t) -> ui
     let mask = vcgeq_u32(r, q_vec);
     vsubq_u32(r, vandq_u32(mask, q_vec))
 }
-
 
 // ===========================================================================
 // Forward NTT — Cooley-Tukey DIT, 100% NEON
@@ -130,7 +126,11 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
         let barrett_interval = {
             let max_b = ((1u64 << 31) / q as u64) as u32;
             let k = max_b.saturating_sub(1) / 2;
-            if k == 0 { 1 } else { k }
+            if k == 0 {
+                1
+            } else {
+                k
+            }
         };
 
         if log_n >= 4 && n >= 16 && barrett_interval >= 4 {
@@ -177,11 +177,15 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                         let wv1 = vmlsq_u32(vw1, vreinterpretq_u32_s32(qh1), q_vec);
 
                         vst1q_u32(data.as_mut_ptr().add(j), vaddq_u32(u0, wv0));
-                        vst1q_u32(data.as_mut_ptr().add(j + t),
-                                  vsubq_u32(vaddq_u32(u0, two_q), wv0));
+                        vst1q_u32(
+                            data.as_mut_ptr().add(j + t),
+                            vsubq_u32(vaddq_u32(u0, two_q), wv0),
+                        );
                         vst1q_u32(data.as_mut_ptr().add(j + 4), vaddq_u32(u1, wv1));
-                        vst1q_u32(data.as_mut_ptr().add(j + 4 + t),
-                                  vsubq_u32(vaddq_u32(u1, two_q), wv1));
+                        vst1q_u32(
+                            data.as_mut_ptr().add(j + 4 + t),
+                            vsubq_u32(vaddq_u32(u1, two_q), wv1),
+                        );
                         j += 8;
                     }
                     // Handle remaining 4-element block
@@ -192,8 +196,10 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                         let vw = vmulq_u32(v4, w_vec);
                         let wv = vmlsq_u32(vw, vreinterpretq_u32_s32(q_hat), q_vec);
                         vst1q_u32(data.as_mut_ptr().add(j), vaddq_u32(u4, wv));
-                        vst1q_u32(data.as_mut_ptr().add(j + t),
-                                  vsubq_u32(vaddq_u32(u4, two_q), wv));
+                        vst1q_u32(
+                            data.as_mut_ptr().add(j + t),
+                            vsubq_u32(vaddq_u32(u4, two_q), wv),
+                        );
                     }
                     k += 2 * t;
                 }
@@ -213,10 +219,10 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
             }
 
             // At this point: m = n/16
-            let m5 = m;       // twiddle offset for stage with t=8
-            let m6 = m * 2;   // twiddle offset for stage with t=4
-            let m7 = m * 4;   // twiddle offset for stage with t=2
-            let m8 = m * 8;   // twiddle offset for stage with t=1
+            let m5 = m; // twiddle offset for stage with t=8
+            let m6 = m * 2; // twiddle offset for stage with t=4
+            let m7 = m * 4; // twiddle offset for stage with t=2
+            let m8 = m * 8; // twiddle offset for stage with t=1
 
             for block in 0..(n / 16) {
                 let k = block * 16;
@@ -246,7 +252,10 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                     let new_r1 = vaddq_u32(r1, wv1);
                     let new_r3 = vsubq_u32(vaddq_u32(r1, two_q), wv1);
 
-                    r0 = new_r0; r1 = new_r1; r2 = new_r2; r3 = new_r3;
+                    r0 = new_r0;
+                    r1 = new_r1;
+                    r2 = new_r2;
+                    r3 = new_r3;
                 }
 
                 // --- Stage t=4: butterfly(r0,r1) and (r2,r3) ---
@@ -270,7 +279,10 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                     let new_r2 = vaddq_u32(r2, wv1);
                     let new_r3 = vsubq_u32(vaddq_u32(r2, two_q), wv1);
 
-                    r0 = new_r0; r1 = new_r1; r2 = new_r2; r3 = new_r3;
+                    r0 = new_r0;
+                    r1 = new_r1;
+                    r2 = new_r2;
+                    r3 = new_r3;
                 }
 
                 // --- Stage t=2: within-register shuffle ---
@@ -299,7 +311,7 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
 
                             $rA = vcombine_u32(vget_low_u32(ru), vget_low_u32(rv));
                             $rB = vcombine_u32(vget_high_u32(ru), vget_high_u32(rv));
-                        }
+                        };
                     }
                     fuse_t2!(r0, r1, 0);
                     fuse_t2!(r2, r3, 2);
@@ -312,7 +324,8 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                     macro_rules! fuse_t1 {
                         ($rA:ident, $rB:ident, $idx:expr) => {
                             let w = vld1q_u32(ctx.root_powers.as_ptr().add(m8 + base + $idx));
-                            let wq = vld1q_s32(ctx.root_powers_qmulh.as_ptr().add(m8 + base + $idx));
+                            let wq =
+                                vld1q_s32(ctx.root_powers_qmulh.as_ptr().add(m8 + base + $idx));
 
                             let u = vuzp1q_u32($rA, $rB);
                             let v = vuzp2q_u32($rA, $rB);
@@ -325,7 +338,7 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
 
                             $rA = vzip1q_u32(ru, rv);
                             $rB = vzip2q_u32(ru, rv);
-                        }
+                        };
                     }
                     fuse_t1!(r0, r1, 0);
                     fuse_t1!(r2, r3, 4);
@@ -372,11 +385,15 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                         let wv0 = vmlsq_u32(vw0, vreinterpretq_u32_s32(qh0), q_vec);
                         let wv1 = vmlsq_u32(vw1, vreinterpretq_u32_s32(qh1), q_vec);
                         vst1q_u32(data.as_mut_ptr().add(j), vaddq_u32(u0, wv0));
-                        vst1q_u32(data.as_mut_ptr().add(j + t),
-                                  vsubq_u32(vaddq_u32(u0, two_q), wv0));
+                        vst1q_u32(
+                            data.as_mut_ptr().add(j + t),
+                            vsubq_u32(vaddq_u32(u0, two_q), wv0),
+                        );
                         vst1q_u32(data.as_mut_ptr().add(j + 4), vaddq_u32(u1, wv1));
-                        vst1q_u32(data.as_mut_ptr().add(j + 4 + t),
-                                  vsubq_u32(vaddq_u32(u1, two_q), wv1));
+                        vst1q_u32(
+                            data.as_mut_ptr().add(j + 4 + t),
+                            vsubq_u32(vaddq_u32(u1, two_q), wv1),
+                        );
                         j += 8;
                     }
                     if j + 4 <= k + t {
@@ -386,8 +403,10 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                         let vw = vmulq_u32(v4, w_vec);
                         let wv = vmlsq_u32(vw, vreinterpretq_u32_s32(q_hat), q_vec);
                         vst1q_u32(data.as_mut_ptr().add(j), vaddq_u32(u4, wv));
-                        vst1q_u32(data.as_mut_ptr().add(j + t),
-                                  vsubq_u32(vaddq_u32(u4, two_q), wv));
+                        vst1q_u32(
+                            data.as_mut_ptr().add(j + t),
+                            vsubq_u32(vaddq_u32(u4, two_q), wv),
+                        );
                     }
                     k += 2 * t;
                 }
@@ -417,7 +436,8 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                     let wv = vmlsq_u32(vw, vreinterpretq_u32_s32(q_hat), q_vec);
                     let tl = vaddq_u32(lo, wv);
                     let th = vsubq_u32(vaddq_u32(lo, two_q), wv);
-                    lo = tl; hi = th;
+                    lo = tl;
+                    hi = th;
                 }
                 {
                     let w = vcombine_u32(
@@ -484,8 +504,10 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                             let vw = vmulq_u32(v4, w_vec);
                             let wv = vmlsq_u32(vw, vreinterpretq_u32_s32(q_hat), q_vec);
                             vst1q_u32(data.as_mut_ptr().add(j), vaddq_u32(u4, wv));
-                            vst1q_u32(data.as_mut_ptr().add(j + t),
-                                      vsubq_u32(vaddq_u32(u4, two_q), wv));
+                            vst1q_u32(
+                                data.as_mut_ptr().add(j + t),
+                                vsubq_u32(vaddq_u32(u4, two_q), wv),
+                            );
                             j += 4;
                         }
                         k += 2 * t;
@@ -511,10 +533,14 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                         let wv = vmlsq_u32(vw, vreinterpretq_u32_s32(q_hat), q_vec);
                         let ru = vaddq_u32(u, wv);
                         let rv = vsubq_u32(vaddq_u32(u, two_q), wv);
-                        vst1q_u32(data.as_mut_ptr().add(k),
-                                  vcombine_u32(vget_low_u32(ru), vget_low_u32(rv)));
-                        vst1q_u32(data.as_mut_ptr().add(k + 4),
-                                  vcombine_u32(vget_high_u32(ru), vget_high_u32(rv)));
+                        vst1q_u32(
+                            data.as_mut_ptr().add(k),
+                            vcombine_u32(vget_low_u32(ru), vget_low_u32(rv)),
+                        );
+                        vst1q_u32(
+                            data.as_mut_ptr().add(k + 4),
+                            vcombine_u32(vget_high_u32(ru), vget_high_u32(rv)),
+                        );
                         k += 8;
                         i += 2;
                     }
@@ -542,9 +568,7 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                 m <<= 1;
                 stages_since_reduce += 1;
             }
-
         }
-
 
         // Final Barrett normalization: reduce all to [0, q)
         for j in (0..n).step_by(4) {
@@ -583,12 +607,7 @@ unsafe fn mod_sub_neon(a: uint32x4_t, b: uint32x4_t, q: uint32x4_t) -> uint32x4_
 /// Output is in `[0, 2q)`, then corrected to `[0, q)`.
 #[cfg(target_arch = "aarch64")]
 #[inline(always)]
-unsafe fn shoup_mul_fast(
-    v: uint32x4_t,
-    w: uint32x4_t,
-    wq: int32x4_t,
-    q: uint32x4_t,
-) -> uint32x4_t {
+unsafe fn shoup_mul_fast(v: uint32x4_t, w: uint32x4_t, wq: int32x4_t, q: uint32x4_t) -> uint32x4_t {
     let q_hat = vqdmulhq_s32(vreinterpretq_s32_u32(v), wq);
     let vw = vmulq_u32(v, w);
     let r = vmlsq_u32(vw, vreinterpretq_u32_s32(q_hat), q);
@@ -717,8 +736,8 @@ fn ntt_inv_neon_inner(data: &mut [u32], ctx: &super::context::Ntt32Context, norm
                             ((w_combined as u64 * (1u64 << 31)) / q as u64) as i32;
 
                         let ni_vec = vdupq_n_u32(ctx.n_inv);
-                        let niq_vec = vdupq_n_s32(
-                            ((ctx.n_inv as u64 * (1u64 << 31)) / q as u64) as i32);
+                        let niq_vec =
+                            vdupq_n_s32(((ctx.n_inv as u64 * (1u64 << 31)) / q as u64) as i32);
                         let wc_vec = vdupq_n_u32(w_combined);
                         let wcq_vec = vdupq_n_s32(w_combined_qmulh);
 

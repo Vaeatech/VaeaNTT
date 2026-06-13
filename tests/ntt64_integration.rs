@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! Integration tests for the 64-bit NTT pipeline.
 //! Cross-validates against naive O(N²) reference and tests algebraic properties.
 

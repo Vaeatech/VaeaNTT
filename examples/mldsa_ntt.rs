@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! Example: ML-DSA NTT (Dilithium signature scheme)
 //!
 //! Demonstrates using VaeaNTT for the NTT operation at the heart of ML-DSA (FIPS 204).

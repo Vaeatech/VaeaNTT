@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # Post-Quantum Cryptography Presets
 //!
 //! Pre-configured NTT contexts for NIST post-quantum standards.
@@ -71,7 +70,6 @@ use crate::ntt32::Ntt32Context;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PqScheme {
     // ----- FIPS 204: ML-DSA (Module-Lattice Digital Signature) -----
-
     /// ML-DSA-44 — NIST Level 2 (128-bit classical security)
     ///
     /// (k,l) = (4,4), N=256, q=8380417.
@@ -282,6 +280,7 @@ impl core::fmt::Debug for PqNtt {
 // ===========================================================================
 
 #[cfg(test)]
+#[allow(unused_variables, clippy::needless_range_loop, dead_code)]
 mod tests {
     use super::*;
 
@@ -360,8 +359,9 @@ mod tests {
     #[test]
     fn test_output_fully_reduced() {
         let ntt = PqNtt::new(PqScheme::MlDsa65);
-        let mut data: alloc::vec::Vec<u32> =
-            (0..ntt.n()).map(|i| (i as u32 * 7 + 13) % ntt.q()).collect();
+        let mut data: alloc::vec::Vec<u32> = (0..ntt.n())
+            .map(|i| (i as u32 * 7 + 13) % ntt.q())
+            .collect();
         ntt.forward(&mut data);
         assert!(
             data.iter().all(|&x| x < ntt.q()),

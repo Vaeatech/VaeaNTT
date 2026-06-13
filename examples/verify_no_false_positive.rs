@@ -16,20 +16,26 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
+#![allow(
+    unused_variables,
+    unused_imports,
+    unused_mut,
+    dead_code,
+    clippy::needless_range_loop
+)]
 // =============================================================================
 // Anti-False-Positive Verification
 // =============================================================================
 // Ensures our tests aren't passing trivially:
 // 1. Forward NTT must actually CHANGE the data
-// 2. Inverse NTT must actually CHANGE the data  
+// 2. Inverse NTT must actually CHANGE the data
 // 3. Forward != identity (not a no-op)
 // 4. Inverse != identity (not a no-op)
 // 5. Forward(Forward(x)) != x (not self-inverse)
 // 6. Cross-validate NEON vs Scalar
 // 7. Known-answer test for small NTT
 
-use vaea_ntt::ntt32::{Ntt32Context, generate_primes_28};
+use vaea_ntt::ntt32::{generate_primes_28, Ntt32Context};
 
 fn main() {
     let mut pass = 0u32;
@@ -60,12 +66,12 @@ fn main() {
 
     for &(n, q) in &configs {
         // Check q is NTT-friendly
-        if ((q as u64 - 1) % (2 * n as u64)) != 0 {
+        if !(q as u64 - 1).is_multiple_of(2 * n as u64) {
             continue;
         }
 
         let ctx = Ntt32Context::new(n, q);
-        
+
         // Non-trivial input: impulse [1, 0, 0, ...]
         let mut data = vec![0u32; n];
         data[0] = 1;
@@ -77,7 +83,11 @@ fn main() {
             fail += 1;
         } else {
             // Count how many elements changed
-            let changed = data.iter().zip(before.iter()).filter(|(a, b)| a != b).count();
+            let changed = data
+                .iter()
+                .zip(before.iter())
+                .filter(|(a, b)| a != b)
+                .count();
             if changed < n / 2 {
                 eprintln!("  ⚠️  Forward only changed {changed}/{n} elements for N={n} q={q}");
             }
@@ -104,7 +114,7 @@ fn main() {
     let t2_fail_start = fail;
 
     for &(n, q) in &configs {
-        if ((q as u64 - 1) % (2 * n as u64)) != 0 {
+        if !(q as u64 - 1).is_multiple_of(2 * n as u64) {
             continue;
         }
         let ctx = Ntt32Context::new(n, q);
@@ -122,7 +132,11 @@ fn main() {
         }
     }
 
-    println!("  Done: {} pass, {} fail\n", pass - t2_start, fail - t2_fail_start);
+    println!(
+        "  Done: {} pass, {} fail\n",
+        pass - t2_start,
+        fail - t2_fail_start
+    );
 
     // =========================================================================
     // Test 3: Forward(Forward(x)) != x (forward is NOT self-inverse)
@@ -133,7 +147,7 @@ fn main() {
     let t3_fail_start = fail;
 
     for &(n, q) in &configs {
-        if ((q as u64 - 1) % (2 * n as u64)) != 0 {
+        if !(q as u64 - 1).is_multiple_of(2 * n as u64) {
             continue;
         }
         let ctx = Ntt32Context::new(n, q);
@@ -151,7 +165,11 @@ fn main() {
         }
     }
 
-    println!("  Done: {} pass, {} fail\n", pass - t3_start, fail - t3_fail_start);
+    println!(
+        "  Done: {} pass, {} fail\n",
+        pass - t3_start,
+        fail - t3_fail_start
+    );
 
     // =========================================================================
     // Test 4: NEON vs Scalar cross-validation
@@ -162,8 +180,8 @@ fn main() {
     let t4_fail_start = fail;
 
     for &(n, q) in &configs {
-        if ((q as u64 - 1) % (2 * n as u64)) != 0 || n < 8 {
-            continue;  // scalar fallback for n < 8, skip
+        if !(q as u64 - 1).is_multiple_of(2 * n as u64) || n < 8 {
+            continue; // scalar fallback for n < 8, skip
         }
         let ctx = Ntt32Context::new(n, q);
 
@@ -214,7 +232,11 @@ fn main() {
         }
     }
 
-    println!("  Done: {} pass, {} fail\n", pass - t4_start, fail - t4_fail_start);
+    println!(
+        "  Done: {} pass, {} fail\n",
+        pass - t4_start,
+        fail - t4_fail_start
+    );
 
     // =========================================================================
     // Test 5: Known-answer test (hand-computed NTT for N=8, q=17)
@@ -234,7 +256,7 @@ fn main() {
         // Input: [1, 0, 0, 0, 0, 0, 0, 0] (unit impulse)
         // NTT of unit impulse should give all-ones (up to twiddle ordering)
         // Actually in negacyclic NTT, NTT([1,0,...,0]) should give something specific
-        
+
         let mut impulse = vec![0u32; 8];
         impulse[0] = 1;
         let orig = impulse.clone();
@@ -263,9 +285,10 @@ fn main() {
         // Manual polynomial multiplication check:
         // In Z_17[X]/(X^8+1): (1+X) * (1+X) = 1 + 2X + X^2
         let mut a = vec![0u32; 8];
-        a[0] = 1; a[1] = 1;
+        a[0] = 1;
+        a[1] = 1;
         let result = ctx.negacyclic_mul(&a, &a);
-        
+
         let expected = [1u32, 2, 1, 0, 0, 0, 0, 0];
         if result != expected {
             eprintln!("  ❌ KAT: (1+X)^2 = {:?}, expected {:?}", result, expected);
@@ -280,7 +303,7 @@ fn main() {
         let mut x1 = vec![0u32; 8];
         x1[1] = 1;
         let result = ctx.negacyclic_mul(&x7, &x1);
-        
+
         // X^7 * X = X^8 ≡ -1 mod (X^8+1) → constant term = q-1 = 16, rest = 0
         let mut expected2 = vec![0u32; 8];
         expected2[0] = 16; // -1 mod 17
@@ -296,14 +319,21 @@ fn main() {
         x4[4] = 1;
         let result = ctx.negacyclic_mul(&x4, &x4);
         if result != expected2 {
-            eprintln!("  ❌ KAT: X^4 * X^4 = {:?}, expected {:?}", result, expected2);
+            eprintln!(
+                "  ❌ KAT: X^4 * X^4 = {:?}, expected {:?}",
+                result, expected2
+            );
             fail += 1;
         } else {
             pass += 1;
         }
     }
 
-    println!("  Done: {} pass, {} fail\n", pass - t5_start, fail - t5_fail_start);
+    println!(
+        "  Done: {} pass, {} fail\n",
+        pass - t5_start,
+        fail - t5_fail_start
+    );
 
     // =========================================================================
     // Test 6: Verify NTT preserves linearity
@@ -314,7 +344,7 @@ fn main() {
     let t6_fail_start = fail;
 
     for &(n, q) in &configs {
-        if ((q as u64 - 1) % (2 * n as u64)) != 0 {
+        if !(q as u64 - 1).is_multiple_of(2 * n as u64) {
             continue;
         }
         let ctx = Ntt32Context::new(n, q);
@@ -331,14 +361,14 @@ fn main() {
         ctx.forward(&mut ntt_b);
 
         // NTT(a) + NTT(b) mod q
-        let sum_ntt: Vec<u32> = ntt_a.iter().zip(ntt_b.iter())
+        let sum_ntt: Vec<u32> = ntt_a
+            .iter()
+            .zip(ntt_b.iter())
             .map(|(&x, &y)| (x as u64 + y as u64) as u32 % q)
             .collect();
 
         // a + b mod q, then NTT
-        let ab_sum: Vec<u32> = a.iter().zip(b.iter())
-            .map(|(&x, &y)| (x + y) % q)
-            .collect();
+        let ab_sum: Vec<u32> = a.iter().zip(b.iter()).map(|(&x, &y)| (x + y) % q).collect();
         let mut ntt_ab = ab_sum;
         ctx.forward(&mut ntt_ab);
 
@@ -350,7 +380,11 @@ fn main() {
         }
     }
 
-    println!("  Done: {} pass, {} fail\n", pass - t6_start, fail - t6_fail_start);
+    println!(
+        "  Done: {} pass, {} fail\n",
+        pass - t6_start,
+        fail - t6_fail_start
+    );
 
     // =========================================================================
     // Test 7: Convolution theorem: NTT(a*b) = NTT(a) · NTT(b)
@@ -378,7 +412,9 @@ fn main() {
         ctx.forward(&mut ntt_b);
 
         // Pointwise multiply mod q
-        let mut pointwise: Vec<u32> = ntt_a.iter().zip(ntt_b.iter())
+        let mut pointwise: Vec<u32> = ntt_a
+            .iter()
+            .zip(ntt_b.iter())
             .map(|(&x, &y)| ((x as u64 * y as u64) % q as u64) as u32)
             .collect();
         ctx.inverse(&mut pointwise);
@@ -398,7 +434,11 @@ fn main() {
         }
     }
 
-    println!("  Done: {} pass, {} fail\n", pass - t7_start, fail - t7_fail_start);
+    println!(
+        "  Done: {} pass, {} fail\n",
+        pass - t7_start,
+        fail - t7_fail_start
+    );
 
     // =========================================================================
     // Summary

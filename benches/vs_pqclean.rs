@@ -16,7 +16,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
+#![allow(
+    unused_variables,
+    unused_imports,
+    unused_mut,
+    dead_code,
+    clippy::needless_range_loop
+)]
 //! # VaeaNTT vs mlkem-native (PQCP) — Definitive NTT Benchmark
 //!
 //! Compares VaeaNTT NEON intrinsics against:
@@ -28,7 +34,7 @@
 //! mlkem-native uses int16_t (8 elements/NEON register, 7 NTT stages)
 //! VaeaNTT uses u32 (4 elements/NEON register, 8 NTT stages)
 
-use criterion::{criterion_group, criterion_main, Criterion, black_box};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use vaea_ntt::ntt32::Ntt32Context;
 
 // PQClean aarch64 assembly (predecessor)
@@ -52,7 +58,9 @@ fn bench_vs_reference(c: &mut Criterion) {
     // =========================================================================
     {
         let mut poly = [0i16; 256];
-        for i in 0..256 { poly[i] = (i as i16 * 17 + 5) % 3329; }
+        for i in 0..256 {
+            poly[i] = (i as i16 * 17 + 5) % 3329;
+        }
 
         group.bench_function("1_mlkem-native-SLOTHY/forward", |b| {
             b.iter(|| {
@@ -74,7 +82,9 @@ fn bench_vs_reference(c: &mut Criterion) {
     // =========================================================================
     {
         let mut poly = [0i16; 256];
-        for i in 0..256 { poly[i] = (i as i16 * 17 + 5) % 3329; }
+        for i in 0..256 {
+            poly[i] = (i as i16 * 17 + 5) % 3329;
+        }
 
         group.bench_function("2_pqclean-asm/forward", |b| {
             b.iter(|| {
@@ -90,7 +100,9 @@ fn bench_vs_reference(c: &mut Criterion) {
     {
         let ctx = Ntt32Context::new(256, 12289);
         let mut poly = vec![0u32; 256];
-        for i in 0..256 { poly[i] = ((i as u64 * 17 + 5) % 12289) as u32; }
+        for i in 0..256 {
+            poly[i] = ((i as u64 * 17 + 5) % 12289) as u32;
+        }
 
         group.bench_function("3_vaea-ntt-u32-q12289/forward", |b| {
             b.iter(|| {
@@ -113,7 +125,9 @@ fn bench_vs_reference(c: &mut Criterion) {
     {
         let ctx = Ntt32Context::new(256, 8380417);
         let mut poly = vec![0u32; 256];
-        for i in 0..256 { poly[i] = ((i as u64 * 17 + 5) % 8380417) as u32; }
+        for i in 0..256 {
+            poly[i] = ((i as u64 * 17 + 5) % 8380417) as u32;
+        }
 
         group.bench_function("4_vaea-ntt-u32-qMLDSA/forward", |b| {
             b.iter(|| {
@@ -130,7 +144,9 @@ fn bench_vs_reference(c: &mut Criterion) {
         let q = vaea_ntt::ntt32::generate_primes_28(256, 1)[0];
         let ctx = Ntt32Context::new(256, q);
         let mut poly = vec![0u32; 256];
-        for i in 0..256 { poly[i] = ((i as u64 * 17 + 5) % q as u64) as u32; }
+        for i in 0..256 {
+            poly[i] = ((i as u64 * 17 + 5) % q as u64) as u32;
+        }
 
         group.bench_function("5_vaea-ntt-u32-q28bit/forward", |b| {
             b.iter(|| {

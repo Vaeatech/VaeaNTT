@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 fn main() {
     // External C/ASM sources for competitive benchmarks only.
     // These directories are .gitignored and not shipped on crates.io.

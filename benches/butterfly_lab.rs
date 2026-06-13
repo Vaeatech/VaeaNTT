@@ -16,7 +16,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
+#![allow(
+    unused_variables,
+    unused_imports,
+    unused_mut,
+    dead_code,
+    clippy::needless_range_loop
+)]
 //! # VaeaNTT Butterfly Lab — Recherche d'une invention NEON
 //!
 //! 4 variantes de butterfly à tester :
@@ -48,10 +54,7 @@ unsafe fn shoup_mul_baseline(
     let prod_lo = vmull_u32(a_lo, ws_lo); // 2 lanes → 64-bit
     let prod_hi = vmull_u32(a_hi, ws_hi); // 2 lanes → 64-bit
 
-    let q_hat = vcombine_u32(
-        vshrn_n_u64::<32>(prod_lo),
-        vshrn_n_u64::<32>(prod_hi),
-    );
+    let q_hat = vcombine_u32(vshrn_n_u64::<32>(prod_lo), vshrn_n_u64::<32>(prod_hi));
 
     // r = a*w - q_hat*q
     let t = vmulq_u32(a, w);
@@ -153,7 +156,7 @@ unsafe fn butterfly_vqdmulh(
 #[cfg(target_arch = "aarch64")]
 #[inline(always)]
 unsafe fn shoup_mul_vqdmulh_lazy(
-    a: uint32x4_t,       // input in [0, 2q)
+    a: uint32x4_t, // input in [0, 2q)
     w: uint32x4_t,
     w_qmulh: int32x4_t,
     q: uint32x4_t,
@@ -178,8 +181,8 @@ unsafe fn shoup_mul_vqdmulh_lazy(
 #[cfg(target_arch = "aarch64")]
 #[inline(always)]
 unsafe fn butterfly_fused(
-    u: uint32x4_t,        // input in [0, 2q)
-    v: uint32x4_t,        // input in [0, 2q)
+    u: uint32x4_t, // input in [0, 2q)
+    v: uint32x4_t, // input in [0, 2q)
     w: uint32x4_t,
     w_qmulh: int32x4_t,
     q: uint32x4_t,
@@ -216,9 +219,9 @@ unsafe fn butterfly_fused(
 #[cfg(target_arch = "aarch64")]
 #[inline(always)]
 unsafe fn shoup_mul_signed(
-    a: int32x4_t,          // input in [-q, q) (relaxed from [-q/2, q/2))
-    w: int32x4_t,          // twiddle factor (signed)
-    w_qmulh: int32x4_t,    // floor(w * 2^31 / q)
+    a: int32x4_t,       // input in [-q, q) (relaxed from [-q/2, q/2))
+    w: int32x4_t,       // twiddle factor (signed)
+    w_qmulh: int32x4_t, // floor(w * 2^31 / q)
     q: int32x4_t,
 ) -> int32x4_t {
     // q_hat ≈ floor(a*w/q)
@@ -234,8 +237,8 @@ unsafe fn shoup_mul_signed(
 #[cfg(target_arch = "aarch64")]
 #[inline(always)]
 unsafe fn butterfly_signed(
-    u: int32x4_t,          // input in [-q, q)
-    v: int32x4_t,          // input in [-q, q)
+    u: int32x4_t, // input in [-q, q)
+    v: int32x4_t, // input in [-q, q)
     w: int32x4_t,
     w_qmulh: int32x4_t,
     q: int32x4_t,
@@ -255,8 +258,8 @@ unsafe fn butterfly_signed(
     // Add/sub — NO conditional reduction needed!
     // u ∈ [-q, q), t ∈ [-q, q) → u+t ∈ [-2q, 2q), u-t ∈ [-2q, 2q)
     // These fit in i32 for 28-bit q (2q < 2^29 < 2^31)
-    let u_out = vaddq_s32(u, t);  // Just ADD. No reduction. No branches.
-    let v_out = vsubq_s32(u, t);  // Just SUB. No reduction. No branches.
+    let u_out = vaddq_s32(u, t); // Just ADD. No reduction. No branches.
+    let v_out = vsubq_s32(u, t); // Just SUB. No reduction. No branches.
 
     (u_out, v_out)
     // Outputs in [-2q, 2q) — need reduction before next Shoup
@@ -267,7 +270,7 @@ unsafe fn butterfly_signed(
 // Benchmarks
 // ===========================================================================
 
-use criterion::{criterion_group, criterion_main, Criterion, black_box};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn precompute_w_qmulh(w: u32, q: u32) -> i32 {
     // floor(w * 2^31 / q)
@@ -302,115 +305,113 @@ fn bench_butterfly_variants(c: &mut Criterion) {
         // Verify baseline
         let r1 = shoup_mul_baseline(a, w, w_shoup, q);
         let r1_val = vgetq_lane_u32::<0>(r1);
-        assert_eq!(r1_val, expected, "Baseline Shoup failed: {} != {}", r1_val, expected);
+        assert_eq!(
+            r1_val, expected,
+            "Baseline Shoup failed: {} != {}",
+            r1_val, expected
+        );
 
         // Verify vqdmulh
         let r2 = shoup_mul_vqdmulh(a, w, w_qmulh, q);
         let r2_val = vgetq_lane_u32::<0>(r2);
-        assert_eq!(r2_val, expected, "vqdmulh Shoup failed: {} != {}", r2_val, expected);
+        assert_eq!(
+            r2_val, expected,
+            "vqdmulh Shoup failed: {} != {}",
+            r2_val, expected
+        );
 
-        println!("✅ Both variants produce correct results for a={}, w={}, q={}", test_a, w_val, q_val);
-        println!("   Expected: {}, Baseline: {}, vqdmulh: {}", expected, r1_val, r2_val);
+        println!(
+            "✅ Both variants produce correct results for a={}, w={}, q={}",
+            test_a, w_val, q_val
+        );
+        println!(
+            "   Expected: {}, Baseline: {}, vqdmulh: {}",
+            expected, r1_val, r2_val
+        );
     }
 
     let mut group = c.benchmark_group("butterfly_variants");
     group.sample_size(500);
 
     // Benchmark: isolated modular multiply (the hot path)
-    group.bench_function("1_shoup_mul_baseline", |b| {
-        unsafe {
-            let mut a = vdupq_n_u32(test_a);
-            let w = vdupq_n_u32(w_val);
-            let w_shoup = vdupq_n_u32(w_shoup_val);
-            let q = vdupq_n_u32(q_val);
-            b.iter(|| {
-                a = shoup_mul_baseline(black_box(a), w, w_shoup, q);
-                a
-            });
-        }
+    group.bench_function("1_shoup_mul_baseline", |b| unsafe {
+        let mut a = vdupq_n_u32(test_a);
+        let w = vdupq_n_u32(w_val);
+        let w_shoup = vdupq_n_u32(w_shoup_val);
+        let q = vdupq_n_u32(q_val);
+        b.iter(|| {
+            a = shoup_mul_baseline(black_box(a), w, w_shoup, q);
+            a
+        });
     });
 
-    group.bench_function("2_shoup_mul_vqdmulh", |b| {
-        unsafe {
-            let mut a = vdupq_n_u32(test_a);
-            let w = vdupq_n_u32(w_val);
-            let w_qmulh = vdupq_n_s32(w_qmulh_val);
-            let q = vdupq_n_u32(q_val);
-            b.iter(|| {
-                a = shoup_mul_vqdmulh(black_box(a), w, w_qmulh, q);
-                a
-            });
-        }
+    group.bench_function("2_shoup_mul_vqdmulh", |b| unsafe {
+        let mut a = vdupq_n_u32(test_a);
+        let w = vdupq_n_u32(w_val);
+        let w_qmulh = vdupq_n_s32(w_qmulh_val);
+        let q = vdupq_n_u32(q_val);
+        b.iter(|| {
+            a = shoup_mul_vqdmulh(black_box(a), w, w_qmulh, q);
+            a
+        });
     });
 
     // Benchmark: full butterfly
-    group.bench_function("3_butterfly_baseline", |b| {
-        unsafe {
-            let mut u = vdupq_n_u32(test_a);
-            let mut v = vdupq_n_u32((test_a * 3) % q_val);
-            let w = vdupq_n_u32(w_val);
-            let w_shoup = vdupq_n_u32(w_shoup_val);
-            let q = vdupq_n_u32(q_val);
-            b.iter(|| {
-                let (u2, v2) = butterfly_baseline(black_box(u), black_box(v), w, w_shoup, q);
-                u = u2;
-                v = v2;
-                (u, v)
-            });
-        }
+    group.bench_function("3_butterfly_baseline", |b| unsafe {
+        let mut u = vdupq_n_u32(test_a);
+        let mut v = vdupq_n_u32((test_a * 3) % q_val);
+        let w = vdupq_n_u32(w_val);
+        let w_shoup = vdupq_n_u32(w_shoup_val);
+        let q = vdupq_n_u32(q_val);
+        b.iter(|| {
+            let (u2, v2) = butterfly_baseline(black_box(u), black_box(v), w, w_shoup, q);
+            u = u2;
+            v = v2;
+            (u, v)
+        });
     });
 
-    group.bench_function("4_butterfly_vqdmulh", |b| {
-        unsafe {
-            let mut u = vdupq_n_u32(test_a);
-            let mut v = vdupq_n_u32((test_a * 3) % q_val);
-            let w = vdupq_n_u32(w_val);
-            let w_qmulh = vdupq_n_s32(w_qmulh_val);
-            let q = vdupq_n_u32(q_val);
-            b.iter(|| {
-                let (u2, v2) = butterfly_vqdmulh(black_box(u), black_box(v), w, w_qmulh, q);
-                u = u2;
-                v = v2;
-                (u, v)
-            });
-        }
+    group.bench_function("4_butterfly_vqdmulh", |b| unsafe {
+        let mut u = vdupq_n_u32(test_a);
+        let mut v = vdupq_n_u32((test_a * 3) % q_val);
+        let w = vdupq_n_u32(w_val);
+        let w_qmulh = vdupq_n_s32(w_qmulh_val);
+        let q = vdupq_n_u32(q_val);
+        b.iter(|| {
+            let (u2, v2) = butterfly_vqdmulh(black_box(u), black_box(v), w, w_qmulh, q);
+            u = u2;
+            v = v2;
+            (u, v)
+        });
     });
 
-    group.bench_function("5_butterfly_fused", |b| {
-        unsafe {
-            let mut u = vdupq_n_u32(test_a);
-            let mut v = vdupq_n_u32((test_a * 3) % q_val);
-            let w = vdupq_n_u32(w_val);
-            let w_qmulh = vdupq_n_s32(w_qmulh_val);
-            let q = vdupq_n_u32(q_val);
-            let two_q = vdupq_n_u32(2 * q_val);
-            b.iter(|| {
-                let (u2, v2) = butterfly_fused(
-                    black_box(u), black_box(v), w, w_qmulh, q, two_q,
-                );
-                u = u2;
-                v = v2;
-                (u, v)
-            });
-        }
+    group.bench_function("5_butterfly_fused", |b| unsafe {
+        let mut u = vdupq_n_u32(test_a);
+        let mut v = vdupq_n_u32((test_a * 3) % q_val);
+        let w = vdupq_n_u32(w_val);
+        let w_qmulh = vdupq_n_s32(w_qmulh_val);
+        let q = vdupq_n_u32(q_val);
+        let two_q = vdupq_n_u32(2 * q_val);
+        b.iter(|| {
+            let (u2, v2) = butterfly_fused(black_box(u), black_box(v), w, w_qmulh, q, two_q);
+            u = u2;
+            v = v2;
+            (u, v)
+        });
     });
 
-    group.bench_function("6_butterfly_signed", |b| {
-        unsafe {
-            let mut u = vdupq_n_s32(test_a as i32);
-            let mut v = vdupq_n_s32(((test_a * 3) % q_val) as i32);
-            let w = vdupq_n_s32(w_val as i32);
-            let w_qmulh = vdupq_n_s32(w_qmulh_val);
-            let q = vdupq_n_s32(q_val as i32);
-            b.iter(|| {
-                let (u2, v2) = butterfly_signed(
-                    black_box(u), black_box(v), w, w_qmulh, q,
-                );
-                u = u2;
-                v = v2;
-                (u, v)
-            });
-        }
+    group.bench_function("6_butterfly_signed", |b| unsafe {
+        let mut u = vdupq_n_s32(test_a as i32);
+        let mut v = vdupq_n_s32(((test_a * 3) % q_val) as i32);
+        let w = vdupq_n_s32(w_val as i32);
+        let w_qmulh = vdupq_n_s32(w_qmulh_val);
+        let q = vdupq_n_s32(q_val as i32);
+        b.iter(|| {
+            let (u2, v2) = butterfly_signed(black_box(u), black_box(v), w, w_qmulh, q);
+            u = u2;
+            v = v2;
+            (u, v)
+        });
     });
 
     group.finish();

@@ -16,7 +16,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
+#![allow(
+    unused_variables,
+    unused_imports,
+    unused_mut,
+    dead_code,
+    clippy::needless_range_loop
+)]
 // =============================================================================
 // VaeaNTT — Exhaustive Stress Test
 // =============================================================================
@@ -26,8 +32,8 @@
 //   - Data patterns: zeros, ones, max (q-1), sequential, impulse, alternating
 //   - Checks: roundtrip, full reduction, multiplication, PQ presets
 
-use vaea_ntt::ntt32::{Ntt32Context, generate_primes_28};
-use vaea_ntt::pq::{PqScheme, PqNtt};
+use vaea_ntt::ntt32::{generate_primes_28, Ntt32Context};
+use vaea_ntt::pq::{PqNtt, PqScheme};
 
 fn main() {
     let mut pass = 0u32;
@@ -43,7 +49,9 @@ fn main() {
     // =========================================================================
     println!("── Phase 1: Roundtrip N × q ──────────────────────────────");
 
-    let sizes: &[usize] = &[2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768];
+    let sizes: &[usize] = &[
+        2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768,
+    ];
 
     // Known primes used in real cryptographic schemes
     let known_primes: &[(u32, &str)] = &[
@@ -87,8 +95,16 @@ fn main() {
                     v[0] = 1;
                     v
                 }),
-                ("alternating", (0..n).map(|i| if i % 2 == 0 { 0 } else { q - 1 }).collect()),
-                ("pseudo_random", (0..n).map(|i| ((i as u64 * 314159265 + 271828182) % q as u64) as u32).collect()),
+                (
+                    "alternating",
+                    (0..n).map(|i| if i % 2 == 0 { 0 } else { q - 1 }).collect(),
+                ),
+                (
+                    "pseudo_random",
+                    (0..n)
+                        .map(|i| ((i as u64 * 314159265 + 271828182) % q as u64) as u32)
+                        .collect(),
+                ),
             ];
 
             for (pat_name, original) in &patterns {
@@ -107,7 +123,9 @@ fn main() {
 
                 // Check forward actually changed data (unless input is all zeros)
                 if *pat_name != "zeros" && data == *original && n > 1 {
-                    eprintln!("  ❌ FAIL: N={n:>5} {name:>30} [{pat_name:>12}] — forward did nothing");
+                    eprintln!(
+                        "  ❌ FAIL: N={n:>5} {name:>30} [{pat_name:>12}] — forward did nothing"
+                    );
                     fail += 1;
                 } else {
                     pass += 1;
@@ -116,7 +134,9 @@ fn main() {
                 // Inverse roundtrip
                 ctx.inverse(&mut data);
                 if data != *original {
-                    eprintln!("  ❌ FAIL: N={n:>5} {name:>30} [{pat_name:>12}] — roundtrip mismatch");
+                    eprintln!(
+                        "  ❌ FAIL: N={n:>5} {name:>30} [{pat_name:>12}] — roundtrip mismatch"
+                    );
                     // Show first diff
                     for (idx, (a, b)) in data.iter().zip(original.iter()).enumerate() {
                         if a != b {
@@ -171,13 +191,17 @@ fn main() {
 
                 // Test this prime
                 let ctx = Ntt32Context::new(256, q32);
-                let mut data: Vec<u32> = (0..256).map(|i| ((i as u64 * 7 + 13) % candidate) as u32).collect();
+                let mut data: Vec<u32> = (0..256)
+                    .map(|i| ((i as u64 * 7 + 13) % candidate) as u32)
+                    .collect();
                 let original = data.clone();
                 ctx.forward(&mut data);
 
                 let all_reduced = data.iter().all(|&x| x < q32);
                 if !all_reduced {
-                    eprintln!("  ❌ FAIL: Barrett boundary q={q32} (interval={bi}) — not fully reduced");
+                    eprintln!(
+                        "  ❌ FAIL: Barrett boundary q={q32} (interval={bi}) — not fully reduced"
+                    );
                     fail += 1;
                 } else {
                     pass += 1;
@@ -185,7 +209,9 @@ fn main() {
 
                 ctx.inverse(&mut data);
                 if data != original {
-                    eprintln!("  ❌ FAIL: Barrett boundary q={q32} (interval={bi}) — roundtrip failed");
+                    eprintln!(
+                        "  ❌ FAIL: Barrett boundary q={q32} (interval={bi}) — roundtrip failed"
+                    );
                     fail += 1;
                 } else {
                     pass += 1;
@@ -194,7 +220,9 @@ fn main() {
                 found = true;
                 break;
             }
-            if found { break; }
+            if found {
+                break;
+            }
         }
         if !found {
             // Try larger N
@@ -211,7 +239,9 @@ fn main() {
             let bi = if bi == 0 { 1 } else { bi };
 
             let ctx = Ntt32Context::new(n, q);
-            let mut data: Vec<u32> = (0..n).map(|i| ((i as u64 * 31 + 97) % q as u64) as u32).collect();
+            let mut data: Vec<u32> = (0..n)
+                .map(|i| ((i as u64 * 31 + 97) % q as u64) as u32)
+                .collect();
             let original = data.clone();
             ctx.forward(&mut data);
 
@@ -233,7 +263,11 @@ fn main() {
         }
     }
 
-    println!("  Phase 2: {} pass, {} fail\n", pass - phase2_start, fail - phase2_fail_start);
+    println!(
+        "  Phase 2: {} pass, {} fail\n",
+        pass - phase2_start,
+        fail - phase2_fail_start
+    );
 
     // =========================================================================
     // Phase 3: Large N with medium primes (Barrett in early stages)
@@ -271,14 +305,18 @@ fn main() {
 
             ctx.inverse(&mut data);
             if data != original {
-                eprintln!("  ❌ FAIL: N={n} q={q} (bi={bi}, early={early_stages}) — max values roundtrip");
+                eprintln!(
+                    "  ❌ FAIL: N={n} q={q} (bi={bi}, early={early_stages}) — max values roundtrip"
+                );
                 fail += 1;
             } else {
                 pass += 1;
             }
 
             // Random-ish stress
-            let mut data2: Vec<u32> = (0..n).map(|i| ((i as u64 * 999983 + 1000003) % q as u64) as u32).collect();
+            let mut data2: Vec<u32> = (0..n)
+                .map(|i| ((i as u64 * 999983 + 1000003) % q as u64) as u32)
+                .collect();
             let original2 = data2.clone();
             ctx.forward(&mut data2);
             ctx.inverse(&mut data2);
@@ -291,7 +329,11 @@ fn main() {
         }
     }
 
-    println!("  Phase 3: {} pass, {} fail\n", pass - phase3_start, fail - phase3_fail_start);
+    println!(
+        "  Phase 3: {} pass, {} fail\n",
+        pass - phase3_start,
+        fail - phase3_fail_start
+    );
 
     // =========================================================================
     // Phase 4: Polynomial multiplication correctness
@@ -312,7 +354,10 @@ fn main() {
         a[1] = 1;
         let result = ctx.negacyclic_mul(&a, &a);
         if result[0] != 1 || result[1] != 2 || result[2] != 1 {
-            eprintln!("  ❌ FAIL: N={n} q={q} — (1+x)^2 wrong: [{}, {}, {}, ...]", result[0], result[1], result[2]);
+            eprintln!(
+                "  ❌ FAIL: N={n} q={q} — (1+x)^2 wrong: [{}, {}, {}, ...]",
+                result[0], result[1], result[2]
+            );
             fail += 1;
         } else {
             let rest_zero = result[3..].iter().all(|&x| x == 0);
@@ -325,7 +370,7 @@ fn main() {
         }
 
         // (1) × (any) = (any)  — identity
-        let ones = vec![0u32; n];
+        let _ones = vec![0u32; n];
         let mut id = vec![0u32; n];
         id[0] = 1; // polynomial "1"
         let data: Vec<u32> = (0..n).map(|i| (i as u32 * 7 + 3) % q).collect();
@@ -348,7 +393,11 @@ fn main() {
         }
     }
 
-    println!("  Phase 4: {} pass, {} fail\n", pass - phase4_start, fail - phase4_fail_start);
+    println!(
+        "  Phase 4: {} pass, {} fail\n",
+        pass - phase4_start,
+        fail - phase4_fail_start
+    );
 
     // =========================================================================
     // Phase 5: PQ presets
@@ -362,7 +411,9 @@ fn main() {
         let ntt = PqNtt::new(scheme);
 
         // Roundtrip
-        let mut data: Vec<u32> = (0..256).map(|i| (i * 1000 % ntt.q() as usize) as u32).collect();
+        let mut data: Vec<u32> = (0..256)
+            .map(|i| (i * 1000 % ntt.q() as usize) as u32)
+            .collect();
         let original = data.clone();
         ntt.forward(&mut data);
 
@@ -400,7 +451,11 @@ fn main() {
         pass += 1;
     }
 
-    println!("  Phase 5: {} pass, {} fail\n", pass - phase5_start, fail - phase5_fail_start);
+    println!(
+        "  Phase 5: {} pass, {} fail\n",
+        pass - phase5_start,
+        fail - phase5_fail_start
+    );
 
     // =========================================================================
     // Phase 6: Inverse NTT specific tests
@@ -442,7 +497,11 @@ fn main() {
         }
     }
 
-    println!("  Phase 6: {} pass, {} fail\n", pass - phase6_start, fail - phase6_fail_start);
+    println!(
+        "  Phase 6: {} pass, {} fail\n",
+        pass - phase6_start,
+        fail - phase6_fail_start
+    );
 
     // =========================================================================
     // Summary

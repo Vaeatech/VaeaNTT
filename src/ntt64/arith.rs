@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # 64-bit Modular Arithmetic
 //!
 //! High-performance modular arithmetic for NTT-friendly primes < 2^62.

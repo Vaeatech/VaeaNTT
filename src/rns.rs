@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # Residue Number System (RNS) — Multi-Moduli Decomposition
 //!
 //! RNS allows working with large integers by decomposing them into residues

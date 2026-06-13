@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! Benchmark VaeaNTT with actual NIST Post-Quantum primes.
 //!
 //! ML-KEM (FIPS 203): q = 3329, NTT size 128 (incomplete NTT to degree-2)

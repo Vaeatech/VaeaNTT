@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # Polynomial over Z_q\[X\]/(X^N + 1)
 //!
 //! Polynomials are stored in coefficient domain by default.
@@ -276,6 +275,7 @@ impl Poly64 {
 ///
 /// O(N²) complexity. Used only in tests to verify NTT-based multiplication.
 #[cfg(test)]
+#[allow(unused_variables, clippy::needless_range_loop, dead_code)]
 fn naive_poly_mul(a: &[u64], b: &[u64], q: u64) -> Vec<u64> {
     let n = a.len();
     assert_eq!(n, b.len());
@@ -304,6 +304,7 @@ fn naive_poly_mul(a: &[u64], b: &[u64], q: u64) -> Vec<u64> {
 // ---------------------------------------------------------------------------
 
 #[cfg(test)]
+#[allow(unused_variables, clippy::needless_range_loop, dead_code)]
 mod tests {
     use super::*;
     use crate::ntt64::arith::Ntt64Arith;

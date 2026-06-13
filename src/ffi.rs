@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # VaeaNTT Foreign Function Interface (Diplomat)
 //!
 //! This module exposes VaeaNTT's NTT32 pipeline to C, C++, JavaScript/WASM,
@@ -140,7 +139,7 @@ pub mod ffi {
             Ok(())
         }
 
-        /// Negacyclic polynomial multiplication in Z_q[X]/(X^N + 1).
+        /// Negacyclic polynomial multiplication in Z_q\[X\]/(X^N + 1).
         ///
         /// Computes `result = a × b mod (X^N + 1)` using NTT.
         /// All three buffers must have exactly N elements.

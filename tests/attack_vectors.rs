@@ -16,11 +16,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! Attack vector tests for VaeaNTT — Day 1 security validation
 
 use vaea_ntt::ntt32::Ntt32Context;
-use vaea_ntt::NttError;
 
 // === 1. Boundary attacks ===
 

@@ -16,14 +16,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
+#![allow(
+    unused_variables,
+    unused_imports,
+    unused_mut,
+    dead_code,
+    clippy::needless_range_loop
+)]
 //! Benchmark: VaeaNTT vs libcrux-ml-kem NEON implementation
 //!
 //! This benchmark compares our NTT kernel against libcrux's NEON-optimized
 //! ML-KEM implementation to answer: "Are we state-of-the-art NEON, or just
 //! faster than a non-NEON competitor?"
 
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{criterion_group, criterion_main, Criterion};
 
 // ---------------------------------------------------------------------------
 // 1. VaeaNTT pure NTT kernel (our implementation)
@@ -84,9 +90,7 @@ fn bench_vaea_ntt_kernel(c: &mut Criterion) {
             v[0] = 1;
             v
         };
-        b.iter(|| {
-            ctx_kem.negacyclic_mul(&a, &identity)
-        });
+        b.iter(|| ctx_kem.negacyclic_mul(&a, &identity));
     });
 
     group.bench_function("vaea/negacyclic_mul/ML-DSA/N=256", |b| {
@@ -96,9 +100,7 @@ fn bench_vaea_ntt_kernel(c: &mut Criterion) {
             v[0] = 1;
             v
         };
-        b.iter(|| {
-            ctx_dsa.negacyclic_mul(&a, &identity)
-        });
+        b.iter(|| ctx_dsa.negacyclic_mul(&a, &identity));
     });
 
     group.finish();
@@ -128,7 +130,8 @@ fn bench_libcrux_mlkem(c: &mut Criterion) {
         let mut rng = rand::thread_rng();
         let mut seed = [0u8; 64];
         rand::RngCore::fill_bytes(&mut rng, &mut seed);
-        let (_, pk) = mlkem768::generate_key_pair(seed);
+        let kp = mlkem768::generate_key_pair(seed);
+        let pk = kp.into_parts().1;
         b.iter(|| {
             let mut eseed = [0u8; 32];
             rand::RngCore::fill_bytes(&mut rng, &mut eseed);

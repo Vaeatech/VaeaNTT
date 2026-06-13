@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
 //! # Prime Generation and Primality Testing
 //!
 //! Deterministic Miller-Rabin primality test (correct for all n < 2^64)

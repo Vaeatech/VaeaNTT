@@ -16,7 +16,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with VaeaNTT. If not, see <https://www.gnu.org/licenses/>.
 
-
+#![allow(
+    unused_variables,
+    unused_imports,
+    unused_mut,
+    dead_code,
+    clippy::needless_range_loop
+)]
 //! Bias verification: check that concrete-ntt and VaeaNTT produce
 //! compatible results (same normalization, same output order).
 
