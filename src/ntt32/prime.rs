@@ -7,6 +7,8 @@
 //! the existence of a 2N-th root of unity — required by negacyclic NTT.
 
 use super::arith::{mod_inv_32, mod_pow_32};
+use alloc::vec;
+use alloc::vec::Vec;
 
 // ===========================================================================
 // Primality testing

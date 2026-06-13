@@ -355,6 +355,8 @@ pub fn mod_inv(a: u64, ctx: &Ntt64Arith) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec;
+    use alloc::vec::Vec;
 
     /// Naive reference multiplication via u128.
     fn naive_mod_mul(a: u64, b: u64, m: u64) -> u64 {

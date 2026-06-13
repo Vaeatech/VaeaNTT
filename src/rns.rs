@@ -11,6 +11,7 @@
 use crate::ntt64::arith::Ntt64Arith;
 use crate::ntt64::context::Ntt64Context;
 use crate::poly::Poly64;
+use alloc::vec::Vec;
 
 // ---------------------------------------------------------------------------
 // RnsContext — RNS context
@@ -209,6 +210,8 @@ impl RnsPoly {
 mod tests {
     use super::*;
     use crate::ntt64::prime::is_prime;
+    use alloc::vec;
+    use alloc::vec::Vec;
 
     const TEST_N: usize = 256;
     const TEST_Q1: u64 = 7681; // 15·512+1

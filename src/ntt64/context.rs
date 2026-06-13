@@ -10,6 +10,8 @@
 
 use super::arith::{mod_add, mod_inv, mod_mul_barrett, mod_pow, mod_sub, Ntt64Arith};
 use super::prime::find_primitive_root;
+use alloc::vec;
+use alloc::vec::Vec;
 
 // ===========================================================================
 // Bit-reversal utility

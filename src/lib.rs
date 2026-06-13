@@ -9,8 +9,19 @@
 //! - [`ntt64`] — 60-62 bit primes, compatible with SEAL/OpenFHE/FHE
 //! - [`poly`] — Polynomials over Z_q\[X\]/(X^N+1)
 //! - [`rns`] — Multi-prime CRT (Residue Number System)
+//!
+//! ## `no_std` Support
+//!
+//! This crate is `no_std` compatible (requires `alloc`).
+//! Enable the `std` feature (on by default) for `std::error::Error` impl.
 
+#![no_std]
 #![warn(missing_docs)]
+
+extern crate alloc;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 /// Errors returned by NTT context construction.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -30,8 +41,8 @@ pub enum NttError {
     PrimeTooLarge(u64),
 }
 
-impl std::fmt::Display for NttError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for NttError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             NttError::InvalidSize(n) => write!(f, "N={n} must be a power of 2 >= 2"),
             NttError::NotPrime(q) => write!(f, "q={q} is not prime"),
@@ -43,6 +54,7 @@ impl std::fmt::Display for NttError {
     }
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for NttError {}
 
 pub mod ntt32;

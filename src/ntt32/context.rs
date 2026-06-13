@@ -8,6 +8,8 @@
 
 use super::prime::NttRootTable;
 use super::scalar::compute_shoup;
+use alloc::vec;
+use alloc::vec::Vec;
 
 // ===========================================================================
 // Ntt32Context — the unified context

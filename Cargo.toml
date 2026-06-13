@@ -9,11 +9,10 @@ repository = "https://github.com/veae/vaea-ntt"
 keywords = ["ntt", "post-quantum", "cryptography", "neon", "arm"]
 categories = ["cryptography", "algorithms", "no-std"]
 
-[lib]
-crate-type = ["lib", "cdylib"]
 
 [features]
-default = []
+default = ["std"]
+std = []
 rand = ["dep:rand", "dep:rand_distr"]
 ffi = ["dep:diplomat", "dep:diplomat-runtime"]
 

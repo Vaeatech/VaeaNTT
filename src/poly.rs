@@ -8,6 +8,8 @@
 
 use crate::ntt64::arith::{mod_mul_barrett, Ntt64Arith};
 use crate::ntt64::context::{ntt_forward, ntt_inverse, Ntt64Context};
+use alloc::vec;
+use alloc::vec::Vec;
 #[cfg(feature = "rand")]
 use rand::Rng;
 #[cfg(feature = "rand")]

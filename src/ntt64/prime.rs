@@ -3,6 +3,8 @@
 //! Deterministic Miller-Rabin primality test (correct for all n < 2^64)
 //! and generation of NTT-friendly primes of the form k·2N + 1.
 
+use alloc::vec::Vec;
+
 // ---------------------------------------------------------------------------
 // Deterministic Miller-Rabin primality test
 // ---------------------------------------------------------------------------
@@ -261,6 +263,8 @@ fn find_generator(q: u64, prime_factors: &[u64]) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_miller_rabin_primes() {
