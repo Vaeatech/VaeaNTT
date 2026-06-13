@@ -49,3 +49,6 @@ pub mod ntt32;
 pub mod ntt64;
 pub mod poly;
 pub mod rns;
+
+#[cfg(feature = "ffi")]
+pub mod ffi;
