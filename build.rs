@@ -18,24 +18,31 @@
 
 
 fn main() {
+    // External C/ASM sources for competitive benchmarks only.
+    // These directories are .gitignored and not shipped on crates.io.
+    // The build succeeds without them — only vs_pqclean / vs_libcrux
+    // benchmarks require them.
+
     #[cfg(target_arch = "aarch64")]
     {
-        // PQClean aarch64 NTT assembly
-        cc::Build::new()
-            .file("pqclean_ntt/ntt.c")
-            .file("pqclean_ntt/__asm_NTT.S")
-            .file("pqclean_ntt/__asm_iNTT.S")
-            .include("pqclean_ntt")
-            .flag("-O3")
-            .compile("pqclean_ntt");
+        if std::path::Path::new("pqclean_ntt/ntt.c").exists() {
+            cc::Build::new()
+                .file("pqclean_ntt/ntt.c")
+                .file("pqclean_ntt/__asm_NTT.S")
+                .file("pqclean_ntt/__asm_iNTT.S")
+                .include("pqclean_ntt")
+                .flag("-O3")
+                .compile("pqclean_ntt");
+        }
 
-        // mlkem-native SLOTHY-optimized aarch64 NTT assembly
-        cc::Build::new()
-            .file("mlkem_ntt/wrapper.c")
-            .file("mlkem_ntt/ntt_aarch64_asm.S")
-            .file("mlkem_ntt/intt_aarch64_asm.S")
-            .include("mlkem_ntt")
-            .flag("-O3")
-            .compile("mlkem_ntt");
+        if std::path::Path::new("mlkem_ntt/wrapper.c").exists() {
+            cc::Build::new()
+                .file("mlkem_ntt/wrapper.c")
+                .file("mlkem_ntt/ntt_aarch64_asm.S")
+                .file("mlkem_ntt/intt_aarch64_asm.S")
+                .include("mlkem_ntt")
+                .flag("-O3")
+                .compile("mlkem_ntt");
+        }
     }
 }
