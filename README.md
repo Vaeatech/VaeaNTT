@@ -64,7 +64,7 @@ assert!(data.iter().all(|&x| x == 42));
 ```rust
 use vaea_ntt::pq::{PqScheme, PqNtt};
 
-let ntt = PqNtt::new(PqScheme::MlDsa65); // FIPS 204, NIST Level 3
+let ntt = PqNtt::new(PqScheme::MlDsa65); // NIST Level 3
 let mut poly = vec![0u32; 256];
 poly[0] = 1;
 ntt.forward(&mut poly);
@@ -94,8 +94,8 @@ VaeaNTT accepts any prime `q` and power-of-two `N` satisfying `q ≡ 1 (mod 2N)`
 
 | Use Case | q | Bits | Tested N |
 |:---------|--:|:----:|:---------|
-| **ML-DSA** (FIPS 204) | 8 380 417 | 23 | 256 |
-| **Falcon** (draft) | 12 289 | 14 | 512, 1024 |
+| **ML-DSA** | 8 380 417 | 23 | 256 |
+| **Falcon** | 12 289 | 14 | 512, 1024 |
 | **NewHope** | 7 681 | 13 | 512, 1024 |
 | **FHE** (CKKS/BGV CRT limbs) | any < 2²⁸ | ≤ 28 | up to 32 768 |
 
@@ -104,7 +104,7 @@ VaeaNTT accepts any prime `q` and power-of-two `N` satisfying `q ≡ 1 (mod 2N)`
 For FHE-compatible 64-bit primes. Includes built-in constants for common primes
 (`PRIME_SEAL`, `PRIME_60_1`, `PRIME_62_1`, etc.).
 
-> **Note on ML-KEM** (FIPS 203): ML-KEM uses q = 3329 with an incomplete NTT
+> **Note on ML-KEM**: ML-KEM uses q = 3329 with an incomplete NTT
 > (size-128 over coefficient pairs), not a standard negacyclic NTT.
 > VaeaNTT's standard NTT works with q = 3329 for N ≤ 128.
 > A dedicated incomplete NTT module for ML-KEM is planned.
@@ -117,7 +117,7 @@ For FHE-compatible 64-bit primes. Includes built-in constants for common primes
 |:-------|:------------|
 | [`ntt32`](src/ntt32/) | NTT for primes < 2²⁸. ARM NEON vectorized + scalar fallback. |
 | [`ntt64`](src/ntt64/) | NTT for 60–62 bit primes. Barrett and Montgomery arithmetic. |
-| [`pq`](src/pq.rs) | Post-quantum presets for ML-DSA (FIPS 204). |
+| [`pq`](src/pq.rs) | Post-quantum presets for ML-DSA. |
 | [`poly`](src/poly.rs) | Polynomial arithmetic over Z_q[X]/(X^N + 1), 64-bit coefficients. |
 | [`rns`](src/rns.rs) | Residue Number System (multi-prime CRT) for FHE. |
 | [`ffi`](src/ffi.rs) | FFI bindings via Diplomat (C, C++, JS/WASM). Requires `ffi` feature. |
@@ -186,28 +186,28 @@ Requires `alloc`. Zero runtime dependencies in this configuration.
 
 ## Performance
 
-Measured with [Criterion](https://crates.io/crates/criterion) on **Apple M3** (aarch64), `--release`, single-threaded.
+Measured with [Criterion](https://crates.io/crates/criterion) on **Apple M3 Pro** (aarch64), `--release`, single-threaded.
 
 ### Forward NTT (`ntt32`, q = 12 289)
 
 | N | Latency | Throughput |
 |-----:|--------:|----------:|
 | 64 | **66 ns** | 970 M coeff/s |
-| 256 | **240 ns** | 1.07 G coeff/s |
-| 1 024 | **1.23 µs** | 832 M coeff/s |
-| 4 096 | **5.8 µs** | 706 M coeff/s |
-| 8 192 | **11.6 µs** | 706 M coeff/s |
-| 16 384 | **24.9 µs** | 658 M coeff/s |
-| 32 768 | **54.5 µs** | 601 M coeff/s |
+| 256 | **234 ns** | 1.09 G coeff/s |
+| 1 024 | **1.19 µs** | 860 M coeff/s |
+| 4 096 | **5.7 µs** | 719 M coeff/s |
+| 8 192 | **11.4 µs** | 719 M coeff/s |
+| 16 384 | **27.2 µs** | 602 M coeff/s |
+| 32 768 | **58.5 µs** | 560 M coeff/s |
 
 ### Inverse NTT (`ntt32`, q = 12 289)
 
 | N | Latency |
 |-----:|--------:|
-| 256 | **295 ns** |
-| 1 024 | **1.44 µs** |
-| 4 096 | **6.7 µs** |
-| 32 768 | **63.6 µs** |
+| 256 | **320 ns** |
+| 1 024 | **1.55 µs** |
+| 4 096 | **7.7 µs** |
+| 32 768 | **63.8 µs** |
 
 ### Negacyclic Polynomial Multiplication
 
@@ -215,9 +215,9 @@ Two forward NTTs + pointwise multiply + inverse NTT.
 
 | N | Total |
 |-----:|------:|
-| 256 | **940 ns** |
-| 1 024 | **4.35 µs** |
-| 4 096 | **20.2 µs** |
+| 256 | **1.08 µs** |
+| 1 024 | **4.97 µs** |
+| 4 096 | **23.3 µs** |
 
 > **Run `cargo bench` on your hardware for your own numbers.**
 > Results vary with hardware and system load.
@@ -285,8 +285,6 @@ cargo test --release
 cargo bench --bench ntt32_bench      # NTT32 full scaling suite
 cargo bench --bench ntt64_bench      # NTT64 pipeline
 cargo bench --bench pq_bench         # Post-quantum presets
-cargo bench --bench vs_pqclean       # vs PQClean reference C
-cargo bench --bench vs_concrete_ntt  # vs concrete-ntt (Zama)
 
 # Security & exhaustive validation
 cargo run --release --example exhaustive_test          # 2618 test cases
@@ -307,21 +305,7 @@ complete source code under the AGPL. This applies to modified and unmodified usa
 
 ### Commercial License
 
-For closed-source, proprietary, or embedded use — purchase a commercial license:
+For closed-source, proprietary, or embedded use, a commercial license is available
+that removes all AGPL obligations.
 
-| Plan | For | Price |
-|:-----|:----|------:|
-| **Startup** | Companies < 10M€ revenue | 5 000 €/year |
-| **Enterprise** | Companies 10M€+ revenue | 25 000 €/year |
-| **OEM** | Embedded / per-device | [Contact us](mailto:alexis@vaea.tech) |
-
-<p align="center">
-  <a href="https://buy.polar.sh/polar_cl_KH22Yp0ruHDFrzhZsbXTIwwQgTnDo08PIzqb13ZDupP"><strong>🛒 Buy a Commercial License →</strong></a>
-</p>
-
-The commercial license removes all AGPL obligations and includes:
-- Use in closed-source products and SaaS
-- Redistribution in proprietary binaries
-- Priority support via email
-
-**Contact**: alexis@vaea.tech
+**Contact**: [alexis@vaea.tech](mailto:alexis@vaea.tech)

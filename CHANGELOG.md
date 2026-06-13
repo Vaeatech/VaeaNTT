@@ -31,14 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - RnsPoly with component-wise operations
 
 - **Post-quantum coverage** — Validated with NIST standard primes:
-  - ML-DSA (FIPS 204): q = 8380417, N = 256 (full negacyclic NTT)
+  - ML-DSA (NIST post-quantum signature): q = 8380417, N = 256 (full negacyclic NTT)
   - Falcon: q = 12289, N = 512/1024
 
 - **Benchmarks** — 4 Criterion suites:
   - `ntt32_bench`: NTT32 pipeline scaling
   - `ntt64_bench`: NTT64 pipeline scaling
   - `pq_bench`: NIST PQ standard primes
-  - `vs_concrete_ntt`: Competitive comparison
+  - `vs_concrete_ntt`: Cross-validation with concrete-ntt
 
 - **Error handling** — `NttError` enum with `try_new()` constructors
 - **Documentation** — `#![warn(missing_docs)]`, rustdoc, README

@@ -30,7 +30,7 @@
 //! the evaluation domain, polynomial multiplication becomes pointwise — O(N)
 //! instead of the naïve O(N²). This makes NTT the critical hot-path in:
 //!
-//! - **Post-quantum cryptography** — ML-DSA (FIPS 204, formerly Dilithium)
+//! - **Post-quantum cryptography** — ML-DSA (formerly Dilithium)
 //!   and other NIST lattice standards multiply polynomials in the ring
 //!   Z_q\[X\]/(X^N+1) via NTT.
 //! - **Fully Homomorphic Encryption (FHE)** — CKKS, BFV, and BGV schemes
@@ -61,7 +61,7 @@
 //! | [`ntt64`] | 60–62 bit primes | Barrett reduction. SEAL/OpenFHE-compatible. Cooley-Tukey forward, Gentleman-Sande inverse. |
 //! | [`poly`] | Polynomial ring | Polynomials over Z_q\[X\]/(X^N+1) with 64-bit coefficients. Tracks coefficient/NTT domain. |
 //! | [`rns`] | Multi-prime CRT | Residue Number System decomposition for FHE. Component-wise NTT on each limb. |
-//! | [`pq`] | NIST presets | One-line constructors for ML-DSA-44/65/87 (FIPS 204). |
+//! | [`pq`] | NIST presets | One-line constructors for ML-DSA-44/65/87. |
 //!
 //! ## Negacyclic Polynomial Multiplication (ntt32)
 //!
@@ -127,7 +127,7 @@
 //! ```
 //! use vaea_ntt::pq::{PqScheme, PqNtt};
 //!
-//! // ML-DSA-65 (FIPS 204) — digital signatures, NIST Level 3
+//! // ML-DSA-65 — digital signatures, NIST Level 3
 //! let ntt = PqNtt::new(PqScheme::MlDsa65);
 //! assert_eq!(ntt.n(), 256);
 //! assert_eq!(ntt.q(), 8_380_417);
@@ -146,7 +146,7 @@
 //!
 //! | Module | Use case |
 //! |--------|----------|
-//! | [`pq`] | Post-quantum presets for ML-DSA (FIPS 204) |
+//! | [`pq`] | Post-quantum presets for ML-DSA |
 //! | [`ntt32`] | 28-bit primes (< 2²⁸), ARM NEON vectorized |
 //! | [`ntt64`] | 60–62 bit primes for FHE (SEAL/OpenFHE compatible) |
 //! | [`poly`] | Polynomials over Z_q\[X\]/(X^N+1) with 64-bit coefficients |
@@ -154,12 +154,12 @@
 //!
 //! ## Performance
 //!
-//! Measured on Apple M3 (single core), `ntt32` pipeline:
+//! Measured on Apple M3 Pro (single core), `ntt32` pipeline:
 //!
 //! | Operation | N = 256 | Throughput |
 //! |-----------|---------|------------|
-//! | Forward NTT | 240 ns | 1.07 billion coeff/s |
-//! | Negacyclic multiply | 940 ns | — |
+//! | Forward NTT | 234 ns | 1.09 billion coeff/s |
+//! | Negacyclic multiply | 1.08 µs | — |
 //!
 //! The `ntt32` pipeline uses the Shoup precomputed-quotient trick with
 //! Harvey lazy butterfly reductions. On aarch64, all butterfly stages are

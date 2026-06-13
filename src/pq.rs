@@ -46,9 +46,9 @@
 //!
 //! | Scheme | Standard | q | N | Notes |
 //! |--------|----------|---|---|-------|
-//! | ML-DSA-44 | FIPS 204 | 8380417 | 256 | Full negacyclic NTT |
-//! | ML-DSA-65 | FIPS 204 | 8380417 | 256 | Full negacyclic NTT |
-//! | ML-DSA-87 | FIPS 204 | 8380417 | 256 | Full negacyclic NTT |
+//! | ML-DSA-44 | NIST Standard | 8380417 | 256 | Full negacyclic NTT |
+//! | ML-DSA-65 | NIST Standard | 8380417 | 256 | Full negacyclic NTT |
+//! | ML-DSA-87 | NIST Standard | 8380417 | 256 | Full negacyclic NTT |
 //!
 //! ### ML-KEM Note
 //!
@@ -69,7 +69,7 @@ use crate::ntt32::Ntt32Context;
 /// standard, eliminating the risk of misconfiguration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PqScheme {
-    // ----- FIPS 204: ML-DSA (Module-Lattice Digital Signature) -----
+    // ----- ML-DSA (NIST post-quantum signature standard) -----
     /// ML-DSA-44 — NIST Level 2 (128-bit classical security)
     ///
     /// (k,l) = (4,4), N=256, q=8380417.
@@ -133,7 +133,8 @@ impl PqScheme {
         }
     }
 
-    /// Returns the NIST FIPS standard number.
+    /// Returns the NIST standard reference (e.g. "FIPS 204").
+    /// Note: this is a parameter reference, not a conformance or certification claim.
     #[inline]
     pub const fn fips(self) -> &'static str {
         match self {

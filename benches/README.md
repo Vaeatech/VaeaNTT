@@ -9,9 +9,9 @@ Criterion benchmarks for VaeaNTT.
 | `ntt32_bench` | Forward/inverse NTT, multiplication (all N) | `cargo bench --bench ntt32_bench` |
 | `ntt64_bench` | 64-bit NTT pipeline | `cargo bench --bench ntt64_bench` |
 | `pq_bench` | Post-quantum presets (ML-DSA) | `cargo bench --bench pq_bench` |
-| `vs_concrete_ntt` | VaeaNTT vs concrete-ntt (Zama) | `cargo bench --bench vs_concrete_ntt` |
-| `vs_pqclean` | VaeaNTT vs PQClean reference C | `cargo bench --bench vs_pqclean` |
-| `vs_libcrux` | VaeaNTT vs libcrux ML-KEM | `cargo bench --bench vs_libcrux` |
+| `vs_concrete_ntt` | Cross-validation with concrete-ntt (Zama) | `cargo bench --bench vs_concrete_ntt` |
+| `vs_pqclean` | Cross-validation with PQClean reference C | `cargo bench --bench vs_pqclean` |
+| `vs_libcrux` | Cross-validation with libcrux ML-KEM | `cargo bench --bench vs_libcrux` |
 | `butterfly_lab` | Isolated butterfly micro-benchmarks | `cargo bench --bench butterfly_lab` |
 | `ntt_lab` | Experimental NTT variants | `cargo bench --bench ntt_lab` |
 

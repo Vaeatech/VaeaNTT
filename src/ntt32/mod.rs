@@ -46,12 +46,12 @@
 //!
 //! ## Performance
 //!
-//! Measured on Apple M3 (single core):
+//! Measured on Apple M3 Pro (single core):
 //!
 //! | Operation              | N = 256 | Throughput               |
 //! |------------------------|---------|--------------------------|
-//! | Forward NTT            | 240 ns  | 1.07 billion coeff/s     |
-//! | Negacyclic multiply    | 940 ns  | —                        |
+//! | Forward NTT            | 234 ns  | 1.09 billion coeff/s     |
+//! | Negacyclic multiply    | 1.08 µs | —                        |
 //!
 //! ## Security
 //!
