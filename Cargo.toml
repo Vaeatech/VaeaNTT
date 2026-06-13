@@ -6,8 +6,12 @@ rust-version = "1.87"
 description = "High-performance NTT engine for post-quantum cryptography. ARM NEON native, 28-bit and 64-bit prime pipelines."
 license = "AGPL-3.0-or-later"
 repository = "https://github.com/Vaeatech/VaeaNTT"
+homepage = "https://vaea.tech"
+documentation = "https://docs.rs/vaea-ntt"
+readme = "README.md"
 keywords = ["ntt", "post-quantum", "cryptography", "neon", "arm"]
 categories = ["cryptography", "algorithms", "no-std"]
+exclude = ["mlkem_ntt/", "pqclean_ntt/", "benches/butterfly_lab.rs", "benches/ntt_lab.rs"]
 
 
 [features]

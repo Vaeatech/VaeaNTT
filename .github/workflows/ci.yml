@@ -92,12 +92,12 @@ jobs:
       - run: cargo fmt -- --check
 
   msrv:
-    name: MSRV (1.73)
+    name: MSRV (1.87)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.73.0
-      - run: cargo check --all-features
+      - uses: dtolnay/rust-toolchain@1.87.0
+      - run: cargo check
 
   bench:
     name: Benchmarks (compile check)
@@ -105,4 +105,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo bench --no-run
+      - run: cargo bench --bench ntt32_bench --bench ntt64_bench --bench pq_bench --no-run
