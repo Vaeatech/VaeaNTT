@@ -22,7 +22,7 @@
 //!
 //! ### Part 4: Full negacyclic multiplication
 
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId, black_box};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 
 /// Modular exponentiation for u32 (used for N^{-1} computation)
 fn mod_pow_u32(base: u32, mut exp: u32, modulus: u32) -> u32 {
@@ -78,40 +78,35 @@ fn bench_iso_n_forward(c: &mut Criterion) {
 
     for &n in &[256, 1024, 4096, 8192] {
         let p = find_shared_28bit_prime(n);
-        eprintln!("N={n}: shared prime = {p} ({} bits)", 32 - p.leading_zeros());
+        eprintln!(
+            "N={n}: shared prime = {p} ({} bits)",
+            32 - p.leading_zeros()
+        );
 
         let data_orig: Vec<u32> = (0..n)
             .map(|i| ((i as u64 * 41 + 7) % p as u64) as u32)
             .collect();
 
         // -- concrete-ntt --
-        let plan = concrete_ntt::prime32::Plan::try_new(n, p)
-            .expect("concrete-ntt Plan creation failed");
+        let plan =
+            concrete_ntt::prime32::Plan::try_new(n, p).expect("concrete-ntt Plan creation failed");
 
-        group.bench_with_input(
-            BenchmarkId::new("concrete-ntt", n),
-            &n,
-            |b, _| {
-                let mut data = data_orig.clone();
-                b.iter(|| {
-                    plan.fwd(black_box(&mut data));
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("concrete-ntt", n), &n, |b, _| {
+            let mut data = data_orig.clone();
+            b.iter(|| {
+                plan.fwd(black_box(&mut data));
+            });
+        });
 
         // -- VaeaNTT --
         let ctx = vaea_ntt::ntt32::Ntt32Context::new(n, p);
 
-        group.bench_with_input(
-            BenchmarkId::new("vaea-ntt", n),
-            &n,
-            |b, _| {
-                let mut data = data_orig.clone();
-                b.iter(|| {
-                    ctx.forward(black_box(&mut data));
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("vaea-ntt", n), &n, |b, _| {
+            let mut data = data_orig.clone();
+            b.iter(|| {
+                ctx.forward(black_box(&mut data));
+            });
+        });
     }
     group.finish();
 }
@@ -135,16 +130,12 @@ fn bench_production_forward(c: &mut Criterion) {
             .map(|i| ((i as u64 * 41 + 7) % cn_prime as u64) as u32)
             .collect();
 
-        group.bench_with_input(
-            BenchmarkId::new("concrete-30bit", n),
-            &n,
-            |b, _| {
-                let mut data = data_cn.clone();
-                b.iter(|| {
-                    plan.fwd(black_box(&mut data));
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("concrete-30bit", n), &n, |b, _| {
+            let mut data = data_cn.clone();
+            b.iter(|| {
+                plan.fwd(black_box(&mut data));
+            });
+        });
 
         // -- VaeaNTT with our 28-bit prime (NEON pipeline) --
         let vaea_prime = vaea_ntt::ntt32::generate_primes_28(n, 1)[0];
@@ -153,16 +144,12 @@ fn bench_production_forward(c: &mut Criterion) {
             .map(|i| ((i as u64 * 41 + 7) % vaea_prime as u64) as u32)
             .collect();
 
-        group.bench_with_input(
-            BenchmarkId::new("vaea-28bit", n),
-            &n,
-            |b, _| {
-                let mut data = data_vn.clone();
-                b.iter(|| {
-                    ctx.forward(black_box(&mut data));
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("vaea-28bit", n), &n, |b, _| {
+            let mut data = data_vn.clone();
+            b.iter(|| {
+                ctx.forward(black_box(&mut data));
+            });
+        });
     }
     group.finish();
 }
@@ -185,12 +172,13 @@ fn bench_iso_security(c: &mut Criterion) {
 
         while shared_primes.len() < 4 && k > 1 {
             let candidate = k * two_n + 1;
-            if candidate < upper && candidate > (1u32 << 27)
+            if candidate < upper
+                && candidate > (1u32 << 27)
                 && concrete_ntt::prime32::Plan::try_new(n, candidate).is_some()
-                    && vaea_ntt::ntt32::is_prime_32(candidate)
-                {
-                    shared_primes.push(candidate);
-                }
+                && vaea_ntt::ntt32::is_prime_32(candidate)
+            {
+                shared_primes.push(candidate);
+            }
             k -= 1;
         }
 
@@ -204,40 +192,34 @@ fn bench_iso_security(c: &mut Criterion) {
             .collect();
 
         // -- concrete-ntt: 4 × 28-bit NTTs --
-        let cn_plans: Vec<_> = shared_primes.iter()
+        let cn_plans: Vec<_> = shared_primes
+            .iter()
             .map(|&p| concrete_ntt::prime32::Plan::try_new(n, p).unwrap())
             .collect();
 
-        group.bench_with_input(
-            BenchmarkId::new("concrete-4x28", n),
-            &n,
-            |b, _| {
-                let mut bufs: Vec<Vec<u32>> = (0..4).map(|_| data_orig.clone()).collect();
-                b.iter(|| {
-                    for (buf, plan) in bufs.iter_mut().zip(cn_plans.iter()) {
-                        plan.fwd(black_box(buf));
-                    }
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("concrete-4x28", n), &n, |b, _| {
+            let mut bufs: Vec<Vec<u32>> = (0..4).map(|_| data_orig.clone()).collect();
+            b.iter(|| {
+                for (buf, plan) in bufs.iter_mut().zip(cn_plans.iter()) {
+                    plan.fwd(black_box(buf));
+                }
+            });
+        });
 
         // -- VaeaNTT: 4 × 28-bit NTTs --
-        let vaea_ctxs: Vec<_> = shared_primes.iter()
+        let vaea_ctxs: Vec<_> = shared_primes
+            .iter()
             .map(|&p| vaea_ntt::ntt32::Ntt32Context::new(n, p))
             .collect();
 
-        group.bench_with_input(
-            BenchmarkId::new("vaea-4x28", n),
-            &n,
-            |b, _| {
-                let mut bufs: Vec<Vec<u32>> = (0..4).map(|_| data_orig.clone()).collect();
-                b.iter(|| {
-                    for (buf, ctx) in bufs.iter_mut().zip(vaea_ctxs.iter()) {
-                        ctx.forward(black_box(buf));
-                    }
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("vaea-4x28", n), &n, |b, _| {
+            let mut bufs: Vec<Vec<u32>> = (0..4).map(|_| data_orig.clone()).collect();
+            b.iter(|| {
+                for (buf, ctx) in bufs.iter_mut().zip(vaea_ctxs.iter()) {
+                    ctx.forward(black_box(buf));
+                }
+            });
+        });
     }
     group.finish();
 }
@@ -259,7 +241,8 @@ fn bench_iso_security_best_of_each(c: &mut Criterion) {
     for &n in &[1024, 4096, 8192] {
         // -- VaeaNTT: 4 × 28-bit (our sweet spot) --
         let vaea_primes = vaea_ntt::ntt32::generate_primes_28(n, 4);
-        let vaea_ctxs: Vec<_> = vaea_primes.iter()
+        let vaea_ctxs: Vec<_> = vaea_primes
+            .iter()
             .map(|&q| vaea_ntt::ntt32::Ntt32Context::new(n, q))
             .collect();
 
@@ -267,18 +250,14 @@ fn bench_iso_security_best_of_each(c: &mut Criterion) {
             .map(|i| ((i as u64 * 41 + 7) % vaea_primes[0] as u64) as u32)
             .collect();
 
-        group.bench_with_input(
-            BenchmarkId::new("vaea-4x28bit", n),
-            &n,
-            |b, _| {
-                let mut bufs: Vec<Vec<u32>> = (0..4).map(|_| data_32.clone()).collect();
-                b.iter(|| {
-                    for (buf, ctx) in bufs.iter_mut().zip(vaea_ctxs.iter()) {
-                        ctx.forward(black_box(buf));
-                    }
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("vaea-4x28bit", n), &n, |b, _| {
+            let mut bufs: Vec<Vec<u32>> = (0..4).map(|_| data_32.clone()).collect();
+            b.iter(|| {
+                for (buf, ctx) in bufs.iter_mut().zip(vaea_ctxs.iter()) {
+                    ctx.forward(black_box(buf));
+                }
+            });
+        });
 
         // -- concrete-ntt: 2 × 60-bit (their sweet spot) --
         // Find 60-bit NTT-friendly primes that concrete-ntt accepts
@@ -290,15 +269,18 @@ fn bench_iso_security_best_of_each(c: &mut Criterion) {
 
         while cn_primes_60.len() < 2 && k > lower_60 / two_n_64 {
             let candidate = k * two_n_64 + 1;
-            if candidate >= lower_60 && candidate < upper_60
-                && concrete_ntt::prime64::Plan::try_new(n, candidate).is_some() {
-                    cn_primes_60.push(candidate);
-                }
+            if candidate >= lower_60
+                && candidate < upper_60
+                && concrete_ntt::prime64::Plan::try_new(n, candidate).is_some()
+            {
+                cn_primes_60.push(candidate);
+            }
             k -= 1;
         }
 
         if cn_primes_60.len() >= 2 {
-            let cn_plans: Vec<_> = cn_primes_60.iter()
+            let cn_plans: Vec<_> = cn_primes_60
+                .iter()
                 .map(|&p| concrete_ntt::prime64::Plan::try_new(n, p).unwrap())
                 .collect();
 
@@ -306,18 +288,14 @@ fn bench_iso_security_best_of_each(c: &mut Criterion) {
                 .map(|i| ((i as u128 * 41 + 7) % cn_primes_60[0] as u128) as u64)
                 .collect();
 
-            group.bench_with_input(
-                BenchmarkId::new("concrete-2x60bit", n),
-                &n,
-                |b, _| {
-                    let mut bufs: Vec<Vec<u64>> = (0..2).map(|_| data_64.clone()).collect();
-                    b.iter(|| {
-                        for (buf, plan) in bufs.iter_mut().zip(cn_plans.iter()) {
-                            plan.fwd(black_box(buf));
-                        }
-                    });
-                },
-            );
+            group.bench_with_input(BenchmarkId::new("concrete-2x60bit", n), &n, |b, _| {
+                let mut bufs: Vec<Vec<u64>> = (0..2).map(|_| data_64.clone()).collect();
+                b.iter(|| {
+                    for (buf, plan) in bufs.iter_mut().zip(cn_plans.iter()) {
+                        plan.fwd(black_box(buf));
+                    }
+                });
+            });
         } else {
             eprintln!("Could not find 2 × 60-bit primes for N={n}");
         }
@@ -344,34 +322,32 @@ fn bench_negacyclic_mul(c: &mut Criterion) {
             .collect();
 
         // -- concrete-ntt: fwd + fwd + pointwise + inv --
-        let plan = concrete_ntt::prime32::Plan::try_new(n, p)
-            .expect("concrete-ntt Plan creation failed");
+        let plan =
+            concrete_ntt::prime32::Plan::try_new(n, p).expect("concrete-ntt Plan creation failed");
 
         // Precompute N^{-1} mod p for concrete-ntt normalization
         // (concrete-ntt inv() does NOT multiply by N^{-1}, unlike VaeaNTT)
         let n_inv = mod_pow_u32(n as u32, p - 2, p);
 
-        group.bench_with_input(
-            BenchmarkId::new("concrete-ntt", n),
-            &n,
-            |bench, _| {
-                bench.iter(|| {
-                    let mut a_ntt = a.clone();
-                    let mut b_ntt = b_data.clone();
-                    plan.fwd(&mut a_ntt);
-                    plan.fwd(&mut b_ntt);
-                    let mut c_ntt: Vec<u32> = a_ntt.iter().zip(b_ntt.iter())
-                        .map(|(&x, &y)| ((x as u64 * y as u64) % p as u64) as u32)
-                        .collect();
-                    plan.inv(black_box(&mut c_ntt));
-                    // Normalize by N^{-1} (concrete-ntt doesn't do this in inv)
-                    for x in c_ntt.iter_mut() {
-                        *x = ((*x as u64 * n_inv as u64) % p as u64) as u32;
-                    }
-                    black_box(&c_ntt);
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("concrete-ntt", n), &n, |bench, _| {
+            bench.iter(|| {
+                let mut a_ntt = a.clone();
+                let mut b_ntt = b_data.clone();
+                plan.fwd(&mut a_ntt);
+                plan.fwd(&mut b_ntt);
+                let mut c_ntt: Vec<u32> = a_ntt
+                    .iter()
+                    .zip(b_ntt.iter())
+                    .map(|(&x, &y)| ((x as u64 * y as u64) % p as u64) as u32)
+                    .collect();
+                plan.inv(black_box(&mut c_ntt));
+                // Normalize by N^{-1} (concrete-ntt doesn't do this in inv)
+                for x in c_ntt.iter_mut() {
+                    *x = ((*x as u64 * n_inv as u64) % p as u64) as u32;
+                }
+                black_box(&c_ntt);
+            });
+        });
 
         // -- VaeaNTT (zero-alloc, fair comparison) --
         let ctx = vaea_ntt::ntt32::Ntt32Context::new(n, p);
@@ -379,21 +355,17 @@ fn bench_negacyclic_mul(c: &mut Criterion) {
         let mut b_buf = b_data.clone();
         let mut result_buf = vec![0u32; n];
 
-        group.bench_with_input(
-            BenchmarkId::new("vaea-ntt", n),
-            &n,
-            |bench, _| {
-                bench.iter(|| {
-                    a_buf.copy_from_slice(&a);
-                    b_buf.copy_from_slice(&b_data);
-                    ctx.negacyclic_mul_into(
-                        black_box(&mut a_buf),
-                        black_box(&mut b_buf),
-                        black_box(&mut result_buf),
-                    );
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("vaea-ntt", n), &n, |bench, _| {
+            bench.iter(|| {
+                a_buf.copy_from_slice(&a);
+                b_buf.copy_from_slice(&b_data);
+                ctx.negacyclic_mul_into(
+                    black_box(&mut a_buf),
+                    black_box(&mut b_buf),
+                    black_box(&mut result_buf),
+                );
+            });
+        });
     }
     group.finish();
 }

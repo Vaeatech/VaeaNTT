@@ -27,15 +27,15 @@
 //! ```
 
 pub mod arith;
-pub mod prime;
-pub mod scalar;
 pub mod context;
 #[cfg(target_arch = "aarch64")]
 pub mod neon;
+pub mod prime;
+pub mod scalar;
 
 // Re-exports for convenience
+pub use arith::{mod_add_28, mod_inv_32, mod_mul_28, mod_pow_32, mod_sub_28};
 pub use context::Ntt32Context;
 pub use prime::generate_primes_28;
-pub use arith::{mod_mul_28, mod_add_28, mod_sub_28, mod_pow_32, mod_inv_32};
-pub use prime::{is_prime_32, find_primitive_root};
+pub use prime::{find_primitive_root, is_prime_32};
 pub use scalar::{compute_shoup, shoup_mul};

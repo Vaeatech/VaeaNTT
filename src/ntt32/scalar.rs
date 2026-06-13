@@ -75,11 +75,7 @@ pub fn shoup_mul(v: u32, w: u32, w_shoup: u32, q: u32) -> u32 {
 ///
 /// All reductions are **branchless**.
 #[inline(always)]
-fn harvey_butterfly_ct(
-    u: u32, v: u32,
-    w: u32, w_shoup: u32,
-    q: u32, two_q: u32,
-) -> (u32, u32) {
+fn harvey_butterfly_ct(u: u32, v: u32, w: u32, w_shoup: u32, q: u32, two_q: u32) -> (u32, u32) {
     // Reduce v from [0, 2q) to [0, q) for Shoup multiplication — branchless
     let v_ge_q = ((v >= q) as u32).wrapping_neg();
     let v_red = v.wrapping_sub(q & v_ge_q);
@@ -118,9 +114,12 @@ fn harvey_butterfly_ct(
 /// All reductions are **branchless**.
 #[inline(always)]
 fn harvey_butterfly_gs(
-    u: u32, v: u32,
-    w_inv: u32, w_inv_shoup: u32,
-    q: u32, two_q: u32,
+    u: u32,
+    v: u32,
+    w_inv: u32,
+    w_inv_shoup: u32,
+    q: u32,
+    two_q: u32,
 ) -> (u32, u32) {
     // Lazy addition: u + v ∈ [0, 4q), reduce to [0, 2q) — branchless
     let u_new = u + v;
@@ -154,9 +153,11 @@ pub fn ntt_forward_scalar(data: &mut [u32], ctx: &super::context::Ntt32Context) 
     let n = ctx.n;
     let q = ctx.q;
     assert_eq!(
-        data.len(), n,
+        data.len(),
+        n,
         "Data length ({}) does not match N ({})",
-        data.len(), n
+        data.len(),
+        n
     );
 
     let mut t = n;
@@ -195,9 +196,11 @@ pub fn ntt_inverse_scalar(data: &mut [u32], ctx: &super::context::Ntt32Context) 
     let n = ctx.n;
     let q = ctx.q;
     assert_eq!(
-        data.len(), n,
+        data.len(),
+        n,
         "Data length ({}) does not match N ({})",
-        data.len(), n
+        data.len(),
+        n
     );
 
     let mut t = 1;
@@ -239,9 +242,11 @@ pub fn ntt_inverse_scalar_lazy(data: &mut [u32], ctx: &super::context::Ntt32Cont
     let n = ctx.n;
     let q = ctx.q;
     assert_eq!(
-        data.len(), n,
+        data.len(),
+        n,
         "Data length ({}) does not match N ({})",
-        data.len(), n
+        data.len(),
+        n
     );
 
     let mut t = 1;
@@ -284,9 +289,11 @@ pub fn forward_harvey(data: &mut [u32], ctx: &super::context::Ntt32Context) {
     let q = ctx.q;
     let two_q = ctx.two_q;
     assert_eq!(
-        data.len(), n,
+        data.len(),
+        n,
         "Data length ({}) does not match N ({})",
-        data.len(), n
+        data.len(),
+        n
     );
 
     let mut t = n;
@@ -301,11 +308,8 @@ pub fn forward_harvey(data: &mut [u32], ctx: &super::context::Ntt32Context) {
             let w_shoup = ctx.root_powers_shoup[m + i];
 
             for j in k..(k + t) {
-                let (u_new, v_new) = harvey_butterfly_ct(
-                    data[j], data[j + t],
-                    w, w_shoup,
-                    q, two_q,
-                );
+                let (u_new, v_new) =
+                    harvey_butterfly_ct(data[j], data[j + t], w, w_shoup, q, two_q);
                 data[j] = u_new;
                 data[j + t] = v_new;
             }
@@ -331,9 +335,11 @@ pub fn inverse_harvey(data: &mut [u32], ctx: &super::context::Ntt32Context) {
     let q = ctx.q;
     let two_q = ctx.two_q;
     assert_eq!(
-        data.len(), n,
+        data.len(),
+        n,
         "Data length ({}) does not match N ({})",
-        data.len(), n
+        data.len(),
+        n
     );
 
     let mut t = 1;
@@ -348,11 +354,8 @@ pub fn inverse_harvey(data: &mut [u32], ctx: &super::context::Ntt32Context) {
             let w_inv_shoup = ctx.inv_root_powers_shoup[m + i];
 
             for j in k..(k + t) {
-                let (u_new, v_new) = harvey_butterfly_gs(
-                    data[j], data[j + t],
-                    w_inv, w_inv_shoup,
-                    q, two_q,
-                );
+                let (u_new, v_new) =
+                    harvey_butterfly_gs(data[j], data[j + t], w_inv, w_inv_shoup, q, two_q);
                 data[j] = u_new;
                 data[j + t] = v_new;
             }

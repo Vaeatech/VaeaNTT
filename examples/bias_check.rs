@@ -10,22 +10,25 @@ fn main() {
     let mut k = upper / two_n;
     while k > 1 {
         let candidate = k * two_n + 1;
-        if candidate < upper && candidate > (1u32 << 27)
+        if candidate < upper
+            && candidate > (1u32 << 27)
             && concrete_ntt::prime32::Plan::try_new(n, candidate).is_some()
-                && vaea_ntt::ntt32::is_prime_32(candidate) {
-                p = candidate;
-                break;
-            }
+            && vaea_ntt::ntt32::is_prime_32(candidate)
+        {
+            p = candidate;
+            break;
+        }
         k -= 1;
     }
     println!("Shared prime: {p} ({} bits)", 32 - p.leading_zeros());
 
     // Input data
-    let input: Vec<u32> = (0..n).map(|i| ((i as u64 * 41 + 7) % p as u64) as u32).collect();
+    let input: Vec<u32> = (0..n)
+        .map(|i| ((i as u64 * 41 + 7) % p as u64) as u32)
+        .collect();
 
     // === concrete-ntt ===
-    let plan = concrete_ntt::prime32::Plan::try_new(n, p)
-        .expect("Plan creation failed");
+    let plan = concrete_ntt::prime32::Plan::try_new(n, p).expect("Plan creation failed");
     let mut cn_data = input.clone();
     println!("=== concrete-ntt ===");
     println!("Input:     {:?}", &cn_data[..8]);
@@ -42,7 +45,8 @@ fn main() {
     // If not exact match, check if it's off by N factor
     if !cn_roundtrip_match {
         let n_inv = mod_inv(n as u32, p);
-        let cn_normalized: Vec<u32> = cn_data.iter()
+        let cn_normalized: Vec<u32> = cn_data
+            .iter()
             .map(|&x| ((x as u64 * n_inv as u64) % p as u64) as u32)
             .collect();
         let needs_normalize = cn_normalized == input;
@@ -101,8 +105,22 @@ fn main() {
 
     // Summary
     println!("\n=== BIAS CHECKLIST ===");
-    println!("☐ Same normalization in inv(): {}", if cn_roundtrip_match { "YES ✓" } else { "NO ⚠️ — BIAS DETECTED" });
-    println!("☐ Same output order in fwd(): {}", if fwd_match { "YES ✓" } else { "NO ⚠️ — one does extra bit-reversal" });
+    println!(
+        "☐ Same normalization in inv(): {}",
+        if cn_roundtrip_match {
+            "YES ✓"
+        } else {
+            "NO ⚠️ — BIAS DETECTED"
+        }
+    );
+    println!(
+        "☐ Same output order in fwd(): {}",
+        if fwd_match {
+            "YES ✓"
+        } else {
+            "NO ⚠️ — one does extra bit-reversal"
+        }
+    );
     println!("☐ Both in-place: YES ✓");
     println!("☐ Context outside loop: YES ✓");
 }

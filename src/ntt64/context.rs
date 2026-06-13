@@ -8,7 +8,7 @@
 //! - **Inverse NTT** — Gentleman-Sande radix-2 DIF (Decimation In Frequency)
 //! - **Tiled NTT** — Four-step variant for improved cache locality on large N
 
-use super::arith::{Ntt64Arith, mod_add, mod_sub, mod_mul_barrett, mod_pow, mod_inv};
+use super::arith::{mod_add, mod_inv, mod_mul_barrett, mod_pow, mod_sub, Ntt64Arith};
 use super::prime::find_primitive_root;
 
 // ===========================================================================
@@ -396,8 +396,8 @@ fn poly_mul_naive(a: &[u64], b: &[u64], q: u64) -> Vec<u64> {
 
 #[cfg(test)]
 mod tests {
+    use super::super::arith::{PRIME_60_1, PRIME_SEAL};
     use super::*;
-    use super::super::arith::{PRIME_SEAL, PRIME_60_1};
 
     // --- Primitive root ---
 
@@ -448,9 +448,9 @@ mod tests {
 
         for &n in &[1024, 4096] {
             let ctx = Ntt64Context::new(n, arith.clone());
-            let original: Vec<u64> = (0..n).map(|i| {
-                ((i as u128 * 123456789 + 987654321) % q as u128) as u64
-            }).collect();
+            let original: Vec<u64> = (0..n)
+                .map(|i| ((i as u128 * 123456789 + 987654321) % q as u128) as u64)
+                .collect();
             let mut data = original.clone();
 
             ntt_forward(&mut data, &ctx);
@@ -558,9 +558,9 @@ mod tests {
         let n = 256;
         let ctx = Ntt64Context::new(n, arith);
 
-        let original: Vec<u64> = (0..n).map(|i| {
-            ((i as u128 * 999999937 + 42) % q as u128) as u64
-        }).collect();
+        let original: Vec<u64> = (0..n)
+            .map(|i| ((i as u128 * 999999937 + 42) % q as u128) as u64)
+            .collect();
         let mut data = original.clone();
 
         ntt_forward(&mut data, &ctx);
@@ -583,7 +583,10 @@ mod tests {
 
             ntt_forward(&mut data, &ctx);
             ntt_inverse(&mut data, &ctx);
-            assert_eq!(data, original, "NTT roundtrip fails for N={n} with PRIME_60_1");
+            assert_eq!(
+                data, original,
+                "NTT roundtrip fails for N={n} with PRIME_60_1"
+            );
         }
     }
 
@@ -640,9 +643,9 @@ mod tests {
         assert_eq!((q - 1) % (2 * n as u64), 0);
         let ctx = Ntt64Context::new(n, arith);
 
-        let original: Vec<u64> = (0..n).map(|i| {
-            ((i as u128 * 314159265 + 271828182) % q as u128) as u64
-        }).collect();
+        let original: Vec<u64> = (0..n)
+            .map(|i| ((i as u128 * 314159265 + 271828182) % q as u128) as u64)
+            .collect();
         let mut data = original.clone();
 
         ntt_forward(&mut data, &ctx);

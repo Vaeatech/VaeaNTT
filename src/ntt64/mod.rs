@@ -10,23 +10,15 @@
 //! - [`context`] — NTT context with precomputed twiddle tables
 
 pub mod arith;
-pub mod prime;
 pub mod context;
+pub mod prime;
 
 // Re-exports for convenience
 pub use arith::{
-    Ntt64Arith,
-    mod_add, mod_sub,
-    mod_mul_barrett, mod_mul_mont,
-    to_montgomery, from_montgomery,
-    mod_pow, mod_inv,
-    PRIME_60_1, PRIME_SEAL, PRIME_62_1, PRIME_60_2, PRIME_60_3,
+    from_montgomery, mod_add, mod_inv, mod_mul_barrett, mod_mul_mont, mod_pow, mod_sub,
+    to_montgomery, Ntt64Arith, PRIME_60_1, PRIME_60_2, PRIME_60_3, PRIME_62_1, PRIME_SEAL,
 };
 
-pub use prime::{
-    is_prime,
-    generate_primes_60,
-    find_primitive_root,
-};
+pub use prime::{find_primitive_root, generate_primes_60, is_prime};
 
 pub use context::Ntt64Context;

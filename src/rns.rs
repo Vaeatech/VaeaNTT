@@ -42,7 +42,10 @@ impl RnsContext {
     /// - If `moduli` is empty
     /// - If any modulus is not NTT-friendly for the given degree
     pub fn new(poly_degree: usize, moduli: Vec<u64>) -> Self {
-        assert!(poly_degree.is_power_of_two(), "poly_degree must be a power of 2");
+        assert!(
+            poly_degree.is_power_of_two(),
+            "poly_degree must be a power of 2"
+        );
         assert!(!moduli.is_empty(), "at least one modulus is required");
 
         let ariths: Vec<Ntt64Arith> = moduli.iter().map(|&q| Ntt64Arith::new(q)).collect();
@@ -129,7 +132,11 @@ impl RnsPoly {
     ///
     /// Both polynomials must have the same level.
     pub fn add(&self, other: &RnsPoly, ctx: &RnsContext) -> RnsPoly {
-        assert_eq!(self.level, other.level, "levels must match: {} != {}", self.level, other.level);
+        assert_eq!(
+            self.level, other.level,
+            "levels must match: {} != {}",
+            self.level, other.level
+        );
 
         let mut result = self.clone();
         for i in 0..self.level {
@@ -204,7 +211,7 @@ mod tests {
     use crate::ntt64::prime::is_prime;
 
     const TEST_N: usize = 256;
-    const TEST_Q1: u64 = 7681;  // 15·512+1
+    const TEST_Q1: u64 = 7681; // 15·512+1
     const TEST_Q2: u64 = 12289; // 24·512+1
 
     fn test_rns_ctx() -> RnsContext {

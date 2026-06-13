@@ -1,0 +1,56 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.0] - 2026-06-13
+
+### Added
+
+- **NTT32 pipeline** — 28-bit primes (< 2²⁸) with ARM NEON native vectorization
+  - Harvey lazy reduction (branchless, constant-time)
+  - Shoup precomputed quotients
+  - Forward, inverse, inverse_lazy (no N⁻¹ normalization)
+  - Negacyclic polynomial multiplication (allocating + zero-alloc)
+  - Automatic NEON/scalar dispatch (compile-time `#[cfg]`)
+
+- **NTT64 pipeline** — 60-62 bit primes with Barrett/Montgomery reduction
+  - Compatible with SEAL/OpenFHE prime conventions
+  - Forward, inverse, tiled forward NTT
+
+- **Poly64** — Polynomial arithmetic over Z_q[X]/(X^N+1)
+  - NTT-domain operations (add, sub, mul, scalar mul, negate)
+  - Random sampling (uniform, ternary, Gaussian) via `rand` feature
+
+- **RNS/CRT** — Multi-prime residue number system
+  - RnsContext with per-modulus NTT contexts
+  - RnsPoly with component-wise operations
+
+- **Post-quantum coverage** — Validated with NIST standard primes:
+  - ML-KEM (FIPS 203): q = 3329, N = 128
+  - ML-DSA (FIPS 204): q = 8380417, N = 256
+  - Falcon: q = 12289, N = 512/1024
+
+- **Benchmarks** — 4 Criterion suites:
+  - `ntt32_bench`: NTT32 pipeline scaling
+  - `ntt64_bench`: NTT64 pipeline scaling
+  - `pq_bench`: NIST PQ standard primes
+  - `vs_concrete_ntt`: Competitive comparison (1.85× speedup)
+
+- **Error handling** — `NttError` enum with `try_new()` constructors
+- **Documentation** — `#![warn(missing_docs)]`, rustdoc, README
+- **CI** — GitHub Actions (ARM + x86 + macOS, clippy, docs, format, MSRV)
+
+### Performance (Apple M3 Pro)
+
+| Operation | N=256 | N=4096 | N=8192 |
+|-----------|:-----:|:------:|:------:|
+| Forward NTT (28-bit) | 335 ns | 7.42 µs | 15.9 µs |
+| vs concrete-ntt | **1.86×** | **1.83×** | **1.75×** |
+
+[Unreleased]: https://github.com/veae/vaea-ntt/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/veae/vaea-ntt/releases/tag/v0.1.0

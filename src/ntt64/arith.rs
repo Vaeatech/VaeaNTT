@@ -79,7 +79,10 @@ impl Ntt64Arith {
     pub fn new(modulus: u64) -> Self {
         assert!(modulus >= 2, "modulus must be >= 2");
         assert!(modulus < (1u64 << 62), "modulus must be < 2^62");
-        assert!(modulus & 1 == 1, "modulus must be odd (required for Montgomery)");
+        assert!(
+            modulus & 1 == 1,
+            "modulus must be odd (required for Montgomery)"
+        );
 
         // --- Barrett constant: μ = floor(2^128 / q) ---
         // 2^128 doesn't fit in u128, so we decompose:
@@ -101,7 +104,11 @@ impl Ntt64Arith {
         // R = 2^64 mod q = (u64::MAX % q + 1) % q  since 2^64 = u64::MAX + 1
         let mont_r = {
             let r = (u64::MAX % modulus).wrapping_add(1);
-            if r == modulus { 0 } else { r }
+            if r == modulus {
+                0
+            } else {
+                r
+            }
         };
 
         // R² = 2^128 mod q = (R · R) mod q  via u128
@@ -148,7 +155,11 @@ pub fn mod_add(a: u64, b: u64, m: u64) -> u64 {
     let (sub, borrow) = s.overflowing_sub(m);
     // s >= m → borrow = false → return sub = s - m
     // s <  m → borrow = true  → return s
-    if borrow { s } else { sub }
+    if borrow {
+        s
+    } else {
+        sub
+    }
 }
 
 /// Branchless modular subtraction.
@@ -165,7 +176,11 @@ pub fn mod_sub(a: u64, b: u64, m: u64) -> u64 {
     let (sub, borrow) = a.overflowing_sub(b);
     // a >= b → borrow = false → return sub = a - b
     // a <  b → borrow = true  → return sub + m = a - b + m
-    if borrow { sub.wrapping_add(m) } else { sub }
+    if borrow {
+        sub.wrapping_add(m)
+    } else {
+        sub
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -183,8 +198,16 @@ pub fn mod_sub(a: u64, b: u64, m: u64) -> u64 {
 /// 4. Single conditional subtraction to correct
 #[inline(always)]
 pub fn mod_mul_barrett(a: u64, b: u64, ctx: &Ntt64Arith) -> u64 {
-    debug_assert!(a < ctx.modulus, "mod_mul_barrett: a={a} >= q={}", ctx.modulus);
-    debug_assert!(b < ctx.modulus, "mod_mul_barrett: b={b} >= q={}", ctx.modulus);
+    debug_assert!(
+        a < ctx.modulus,
+        "mod_mul_barrett: a={a} >= q={}",
+        ctx.modulus
+    );
+    debug_assert!(
+        b < ctx.modulus,
+        "mod_mul_barrett: b={b} >= q={}",
+        ctx.modulus
+    );
 
     let p = a as u128 * b as u128;
 
@@ -215,7 +238,11 @@ pub fn mod_mul_barrett(a: u64, b: u64, ctx: &Ntt64Arith) -> u64 {
 
     // Branchless correction: r may be in [0, 2q), so at most one subtraction
     let (corrected, borrow) = r.overflowing_sub(ctx.modulus);
-    if borrow { r } else { corrected }
+    if borrow {
+        r
+    } else {
+        corrected
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -249,7 +276,11 @@ pub fn mod_mul_mont(a_mont: u64, b_mont: u64, ctx: &Ntt64Arith) -> u64 {
 
     // Branchless final correction: u may be in [0, 2q)
     let (corrected, borrow) = u.overflowing_sub(ctx.modulus);
-    if borrow { u } else { corrected }
+    if borrow {
+        u
+    } else {
+        corrected
+    }
 }
 
 /// Converts a value into Montgomery domain.
@@ -461,9 +492,17 @@ mod tests {
         let ctx = Ntt64Arith::new(PRIME_60_1);
         let m = ctx.modulus;
         let test_values: Vec<u64> = vec![
-            0, 1, 2, m - 1, m - 2, m / 2, m / 3,
-            123456789, 987654321,
-            (1u64 << 30) + 7, (1u64 << 40) - 3,
+            0,
+            1,
+            2,
+            m - 1,
+            m - 2,
+            m / 2,
+            m / 3,
+            123456789,
+            987654321,
+            (1u64 << 30) + 7,
+            (1u64 << 40) - 3,
         ];
         for &a in &test_values {
             for &b in &test_values {

@@ -26,7 +26,10 @@ use super::scalar::compute_shoup;
 #[cfg(target_arch = "aarch64")]
 #[inline(always)]
 unsafe fn shoup_mul_neon(
-    v: uint32x4_t, w: uint32x4_t, w_shoup: uint32x4_t, q: uint32x4_t,
+    v: uint32x4_t,
+    w: uint32x4_t,
+    w_shoup: uint32x4_t,
+    q: uint32x4_t,
 ) -> uint32x4_t {
     let prod_lo = vmull_u32(vget_low_u32(v), vget_low_u32(w_shoup));
     let prod_hi = vmull_high_u32(v, w_shoup);
@@ -118,8 +121,8 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                         vdup_n_u32(ctx.root_powers_shoup[m + i + 1]),
                     );
 
-                    let raw_lo = vld1q_u32(data.as_ptr().add(k));       // [a0,a1,a2,a3]
-                    let raw_hi = vld1q_u32(data.as_ptr().add(k + 4));   // [a4,a5,a6,a7]
+                    let raw_lo = vld1q_u32(data.as_ptr().add(k)); // [a0,a1,a2,a3]
+                    let raw_hi = vld1q_u32(data.as_ptr().add(k + 4)); // [a4,a5,a6,a7]
 
                     // u = [a0,a1,a4,a5], v = [a2,a3,a6,a7]
                     let u = vcombine_u32(vget_low_u32(raw_lo), vget_low_u32(raw_hi));
@@ -147,8 +150,8 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                     let w_vec = vld1q_u32(ctx.root_powers.as_ptr().add(m + i));
                     let ws_vec = vld1q_u32(ctx.root_powers_shoup.as_ptr().add(m + i));
 
-                    let raw_lo = vld1q_u32(data.as_ptr().add(k));       // [a0,a1,a2,a3]
-                    let raw_hi = vld1q_u32(data.as_ptr().add(k + 4));   // [a4,a5,a6,a7]
+                    let raw_lo = vld1q_u32(data.as_ptr().add(k)); // [a0,a1,a2,a3]
+                    let raw_hi = vld1q_u32(data.as_ptr().add(k + 4)); // [a4,a5,a6,a7]
 
                     // Deinterleave: u = [a0,a2,a4,a6], v = [a1,a3,a5,a7]
                     let u = vuzp1q_u32(raw_lo, raw_hi);

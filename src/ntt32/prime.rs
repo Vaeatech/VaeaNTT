@@ -6,7 +6,7 @@
 //! These primes satisfy `q ≡ 1 (mod 2N)`, the necessary condition for
 //! the existence of a 2N-th root of unity — required by negacyclic NTT.
 
-use super::arith::{mod_pow_32, mod_inv_32};
+use super::arith::{mod_inv_32, mod_pow_32};
 
 // ===========================================================================
 // Primality testing
@@ -171,11 +171,7 @@ pub fn find_primitive_root(n: usize, q: u32) -> u32 {
     let psi = mod_pow_32(g, exp, q);
 
     // Safety checks
-    debug_assert_eq!(
-        mod_pow_32(psi, two_n, q),
-        1,
-        "ψ^(2N) ≠ 1: not a 2N-th root"
-    );
+    debug_assert_eq!(mod_pow_32(psi, two_n, q), 1, "ψ^(2N) ≠ 1: not a 2N-th root");
     debug_assert_eq!(
         mod_pow_32(psi, n as u32, q),
         q - 1,
@@ -298,7 +294,8 @@ mod tests {
                 assert!(p < (1u32 << 28), "Prime {p} >= 2^28");
                 assert!(is_prime_32(p), "{p} is not prime");
                 assert_eq!(
-                    (p - 1) % (2 * n as u32), 0,
+                    (p - 1) % (2 * n as u32),
+                    0,
                     "Prime {p} is not NTT-friendly for N={n}"
                 );
             }
@@ -319,11 +316,13 @@ mod tests {
             let psi = find_primitive_root(n, q);
 
             assert_eq!(
-                mod_pow_32(psi, 2 * n as u32, q), 1,
+                mod_pow_32(psi, 2 * n as u32, q),
+                1,
                 "ψ^(2N) ≠ 1 for N={n}, q={q}"
             );
             assert_eq!(
-                mod_pow_32(psi, n as u32, q), q - 1,
+                mod_pow_32(psi, n as u32, q),
+                q - 1,
                 "ψ^N ≠ -1 for N={n}, q={q}"
             );
         }

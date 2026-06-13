@@ -6,8 +6,8 @@
 //!
 //! In NTT domain, multiplication is pointwise O(N) instead of O(N²).
 
-use crate::ntt64::arith::{Ntt64Arith, mod_mul_barrett};
-use crate::ntt64::context::{Ntt64Context, ntt_forward, ntt_inverse};
+use crate::ntt64::arith::{mod_mul_barrett, Ntt64Arith};
+use crate::ntt64::context::{ntt_forward, ntt_inverse, Ntt64Context};
 #[cfg(feature = "rand")]
 use rand::Rng;
 #[cfg(feature = "rand")]
@@ -68,12 +68,10 @@ impl Poly64 {
         let mut rng = rand::thread_rng();
         let q = arith.modulus;
         let data: Vec<u64> = (0..n)
-            .map(|_| {
-                match rng.gen_range(0u32..3) {
-                    0 => 0,
-                    1 => 1,
-                    _ => q - 1,
-                }
+            .map(|_| match rng.gen_range(0u32..3) {
+                0 => 0,
+                1 => 1,
+                _ => q - 1,
             })
             .collect();
         Self {
@@ -102,7 +100,11 @@ impl Poly64 {
                 } else {
                     let abs_val = (-rounded) as u64;
                     let r = abs_val % q;
-                    if r == 0 { 0 } else { q - r }
+                    if r == 0 {
+                        0
+                    } else {
+                        q - r
+                    }
                 }
             })
             .collect();
@@ -147,8 +149,15 @@ impl Poly64 {
     /// # Panics
     /// Panics if domains or sizes don't match.
     pub fn add_assign(&mut self, other: &Poly64, arith: &Ntt64Arith) {
-        assert_eq!(self.is_ntt, other.is_ntt, "polynomials must be in the same domain");
-        assert_eq!(self.data.len(), other.data.len(), "polynomials must have the same size");
+        assert_eq!(
+            self.is_ntt, other.is_ntt,
+            "polynomials must be in the same domain"
+        );
+        assert_eq!(
+            self.data.len(),
+            other.data.len(),
+            "polynomials must have the same size"
+        );
         let q = arith.modulus;
         for (a, &b) in self.data.iter_mut().zip(other.data.iter()) {
             let sum = *a + b;
@@ -165,8 +174,15 @@ impl Poly64 {
     /// # Panics
     /// Panics if domains or sizes don't match.
     pub fn sub_assign(&mut self, other: &Poly64, arith: &Ntt64Arith) {
-        assert_eq!(self.is_ntt, other.is_ntt, "polynomials must be in the same domain");
-        assert_eq!(self.data.len(), other.data.len(), "polynomials must have the same size");
+        assert_eq!(
+            self.is_ntt, other.is_ntt,
+            "polynomials must be in the same domain"
+        );
+        assert_eq!(
+            self.data.len(),
+            other.data.len(),
+            "polynomials must have the same size"
+        );
         let q = arith.modulus;
         for (a, &b) in self.data.iter_mut().zip(other.data.iter()) {
             let (sub, borrow) = (*a).overflowing_sub(b);
@@ -186,7 +202,11 @@ impl Poly64 {
             self.is_ntt && other.is_ntt,
             "both polynomials must be in NTT domain for multiplication"
         );
-        assert_eq!(self.data.len(), other.data.len(), "polynomials must have the same size");
+        assert_eq!(
+            self.data.len(),
+            other.data.len(),
+            "polynomials must have the same size"
+        );
         for (a, &b) in self.data.iter_mut().zip(other.data.iter()) {
             *a = mod_mul_barrett(*a, b, arith);
         }
@@ -203,7 +223,7 @@ impl Poly64 {
     pub fn negate(&mut self, arith: &Ntt64Arith) {
         let q = arith.modulus;
         for a in self.data.iter_mut() {
-            // Branchless: mask = (a != 0) as u64 * u64::MAX, then q & mask - *a ... 
+            // Branchless: mask = (a != 0) as u64 * u64::MAX, then q & mask - *a ...
             // but the branch here is on public data (coefficients), not secrets,
             // and the branch predictor handles it well. Keep it simple.
             *a = if *a == 0 { 0 } else { q - *a };
@@ -426,7 +446,11 @@ mod tests {
             .iter()
             .map(|&c| {
                 let c = c as f64;
-                if c > half_q { c - q } else { c }
+                if c > half_q {
+                    c - q
+                } else {
+                    c
+                }
             })
             .collect();
 
@@ -435,7 +459,10 @@ mod tests {
 
         let variance = centered.iter().map(|&x| (x - mean).powi(2)).sum::<f64>() / n as f64;
         let std_dev = variance.sqrt();
-        assert!((std_dev - sigma).abs() < 1.0, "stddev too far from {sigma}: {std_dev}");
+        assert!(
+            (std_dev - sigma).abs() < 1.0,
+            "stddev too far from {sigma}: {std_dev}"
+        );
     }
 
     #[test]
@@ -451,7 +478,10 @@ mod tests {
         assert!(!poly.is_ntt);
 
         for i in 0..TEST_N {
-            assert_eq!(poly.data[i], original.data[i], "NTT roundtrip fails at index {i}");
+            assert_eq!(
+                poly.data[i], original.data[i],
+                "NTT roundtrip fails at index {i}"
+            );
         }
     }
 

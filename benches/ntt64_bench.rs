@@ -1,5 +1,5 @@
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId, black_box};
-use vaea_ntt::ntt64::{Ntt64Context, Ntt64Arith, PRIME_SEAL, generate_primes_60};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use vaea_ntt::ntt64::{generate_primes_60, Ntt64Arith, Ntt64Context, PRIME_SEAL};
 
 fn bench_forward_64(c: &mut Criterion) {
     let mut group = c.benchmark_group("ntt64_forward");
@@ -7,7 +7,9 @@ fn bench_forward_64(c: &mut Criterion) {
         let primes = generate_primes_60(n, 60, 1);
         let arith = Ntt64Arith::new(primes[0]);
         let ctx = Ntt64Context::new(n, arith);
-        let data_orig: Vec<u64> = (0..n).map(|i| ((i as u128 * 314159 + 271828) % primes[0] as u128) as u64).collect();
+        let data_orig: Vec<u64> = (0..n)
+            .map(|i| ((i as u128 * 314159 + 271828) % primes[0] as u128) as u64)
+            .collect();
 
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |b, _| {
             let mut data = data_orig.clone();
@@ -25,7 +27,9 @@ fn bench_inverse_64(c: &mut Criterion) {
         let primes = generate_primes_60(n, 60, 1);
         let arith = Ntt64Arith::new(primes[0]);
         let ctx = Ntt64Context::new(n, arith);
-        let mut data: Vec<u64> = (0..n).map(|i| ((i as u128 * 314159 + 271828) % primes[0] as u128) as u64).collect();
+        let mut data: Vec<u64> = (0..n)
+            .map(|i| ((i as u128 * 314159 + 271828) % primes[0] as u128) as u64)
+            .collect();
         ctx.forward(&mut data);
 
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |b, _| {
@@ -44,7 +48,9 @@ fn bench_tiled_64(c: &mut Criterion) {
         let primes = generate_primes_60(n, 60, 1);
         let arith = Ntt64Arith::new(primes[0]);
         let ctx = Ntt64Context::new(n, arith);
-        let data_orig: Vec<u64> = (0..n).map(|i| ((i as u128 * 314159 + 271828) % primes[0] as u128) as u64).collect();
+        let data_orig: Vec<u64> = (0..n)
+            .map(|i| ((i as u128 * 314159 + 271828) % primes[0] as u128) as u64)
+            .collect();
 
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |b, _| {
             let mut data = data_orig.clone();
@@ -62,8 +68,12 @@ fn bench_negacyclic_mul_64(c: &mut Criterion) {
         let primes = generate_primes_60(n, 60, 1);
         let arith = Ntt64Arith::new(primes[0]);
         let ctx = Ntt64Context::new(n, arith);
-        let a: Vec<u64> = (0..n).map(|i| ((i as u128 * 17 + 3) % primes[0] as u128) as u64).collect();
-        let b_data: Vec<u64> = (0..n).map(|i| ((i as u128 * 31 + 11) % primes[0] as u128) as u64).collect();
+        let a: Vec<u64> = (0..n)
+            .map(|i| ((i as u128 * 17 + 3) % primes[0] as u128) as u64)
+            .collect();
+        let b_data: Vec<u64> = (0..n)
+            .map(|i| ((i as u128 * 31 + 11) % primes[0] as u128) as u64)
+            .collect();
 
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |bench, _| {
             bench.iter(|| {
@@ -79,7 +89,9 @@ fn bench_seal_prime(c: &mut Criterion) {
     let arith = Ntt64Arith::new(PRIME_SEAL);
     for &n in &[1024, 4096, 32768] {
         let ctx = Ntt64Context::new(n, arith.clone());
-        let data_orig: Vec<u64> = (0..n).map(|i| ((i as u128 * 314159) % PRIME_SEAL as u128) as u64).collect();
+        let data_orig: Vec<u64> = (0..n)
+            .map(|i| ((i as u128 * 314159) % PRIME_SEAL as u128) as u64)
+            .collect();
 
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |b, _| {
             let mut data = data_orig.clone();
@@ -91,7 +103,8 @@ fn bench_seal_prime(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches,
+criterion_group!(
+    benches,
     bench_forward_64,
     bench_inverse_64,
     bench_tiled_64,

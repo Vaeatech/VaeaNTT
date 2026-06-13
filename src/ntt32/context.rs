@@ -250,12 +250,7 @@ impl Ntt32Context {
     /// // result now contains a·b mod (X^256 + 1)
     /// // a and b are now in NTT domain (overwritten)
     /// ```
-    pub fn negacyclic_mul_into(
-        &self,
-        a_buf: &mut [u32],
-        b_buf: &mut [u32],
-        result: &mut [u32],
-    ) {
+    pub fn negacyclic_mul_into(&self, a_buf: &mut [u32], b_buf: &mut [u32], result: &mut [u32]) {
         let n = self.n;
         assert_eq!(a_buf.len(), n, "a_buf.len()={} != N={n}", a_buf.len());
         assert_eq!(b_buf.len(), n, "b_buf.len()={} != N={n}", b_buf.len());
@@ -374,7 +369,9 @@ mod tests {
         let q = test_prime(n);
         let ctx = Ntt32Context::new(n, q);
 
-        let a: Vec<u32> = (0..n).map(|i| ((i as u64 * 17 + 5) % q as u64) as u32).collect();
+        let a: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 17 + 5) % q as u64) as u32)
+            .collect();
         let mut one = vec![0u32; n];
         one[0] = 1;
 
@@ -420,14 +417,20 @@ mod tests {
         let mut data = original.clone();
         ctx.forward(&mut data);
         ctx.inverse_lazy(&mut data);
-        assert_ne!(data, original, "inverse_lazy should not match original (no N^{{-1}})");
+        assert_ne!(
+            data, original,
+            "inverse_lazy should not match original (no N^{{-1}})"
+        );
 
         // But after manual N^{-1} normalization, it should match
         let n_inv = ctx.n_inv();
         for x in data.iter_mut() {
             *x = ((*x as u64 * n_inv as u64) % q as u64) as u32;
         }
-        assert_eq!(data, original, "inverse_lazy + manual N^{{-1}} should match original");
+        assert_eq!(
+            data, original,
+            "inverse_lazy + manual N^{{-1}} should match original"
+        );
     }
 
     #[test]
@@ -449,7 +452,8 @@ mod tests {
 
         // data_lazy * N^{-1} should equal data_full
         let n_inv = ctx.n_inv();
-        let data_lazy_normalized: Vec<u32> = data_lazy.iter()
+        let data_lazy_normalized: Vec<u32> = data_lazy
+            .iter()
             .map(|&x| ((x as u64 * n_inv as u64) % q as u64) as u32)
             .collect();
         assert_eq!(data_full, data_lazy_normalized);
@@ -461,8 +465,12 @@ mod tests {
         let q = test_prime(n);
         let ctx = Ntt32Context::new(n, q);
 
-        let a: Vec<u32> = (0..n).map(|i| ((i as u64 * 17 + 3) % q as u64) as u32).collect();
-        let b: Vec<u32> = (0..n).map(|i| ((i as u64 * 31 + 7) % q as u64) as u32).collect();
+        let a: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 17 + 3) % q as u64) as u32)
+            .collect();
+        let b: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 31 + 7) % q as u64) as u32)
+            .collect();
 
         // Allocating version
         let result_alloc = ctx.negacyclic_mul(&a, &b);
@@ -473,7 +481,10 @@ mod tests {
         let mut result_inplace = vec![0u32; n];
         ctx.negacyclic_mul_into(&mut a_buf, &mut b_buf, &mut result_inplace);
 
-        assert_eq!(result_alloc, result_inplace, "negacyclic_mul_into must match negacyclic_mul");
+        assert_eq!(
+            result_alloc, result_inplace,
+            "negacyclic_mul_into must match negacyclic_mul"
+        );
     }
 
     #[test]
@@ -496,7 +507,10 @@ mod tests {
             let expected = ctx.negacyclic_mul(&a_buf, &b_buf);
 
             ctx.negacyclic_mul_into(&mut a_buf, &mut b_buf, &mut result);
-            assert_eq!(result, expected, "Reusable buffer mismatch at round {round}");
+            assert_eq!(
+                result, expected,
+                "Reusable buffer mismatch at round {round}"
+            );
 
             // Re-fill for next round (a_buf/b_buf were destroyed)
         }
@@ -530,7 +544,9 @@ mod tests {
         let ctx = Ntt32Context::new(n, q);
 
         // Multiply by [1, 0, 0, ...] should be identity
-        let a: Vec<u32> = (0..n).map(|i| ((i as u64 * 17 + 5) % q as u64) as u32).collect();
+        let a: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 17 + 5) % q as u64) as u32)
+            .collect();
         let mut one = vec![0u32; n];
         one[0] = 1;
 
@@ -576,7 +592,9 @@ mod tests {
         let n = 512;
         let ctx = Ntt32Context::new(n, q);
 
-        let a: Vec<u32> = (0..n).map(|i| ((i as u64 * 17 + 5) % q as u64) as u32).collect();
+        let a: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 17 + 5) % q as u64) as u32)
+            .collect();
         let mut one = vec![0u32; n];
         one[0] = 1;
 
@@ -625,6 +643,9 @@ mod tests {
         }
 
         let result = ctx.negacyclic_mul(&a, &b);
-        assert_eq!(result, expected, "ML-KEM negacyclic multiplication mismatch");
+        assert_eq!(
+            result, expected,
+            "ML-KEM negacyclic multiplication mismatch"
+        );
     }
 }

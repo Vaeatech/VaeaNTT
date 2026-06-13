@@ -35,7 +35,9 @@ impl std::fmt::Display for NttError {
         match self {
             NttError::InvalidSize(n) => write!(f, "N={n} must be a power of 2 >= 2"),
             NttError::NotPrime(q) => write!(f, "q={q} is not prime"),
-            NttError::NotNttFriendly { q, n } => write!(f, "q={q} does not satisfy q ≡ 1 (mod {})", 2 * n),
+            NttError::NotNttFriendly { q, n } => {
+                write!(f, "q={q} does not satisfy q ≡ 1 (mod {})", 2 * n)
+            }
             NttError::PrimeTooLarge(q) => write!(f, "q={q} must be < 2^28"),
         }
     }

@@ -118,19 +118,12 @@ fn mod_mul_raw(a: u64, b: u64, modulus: u64) -> u64 {
 /// # Panics
 /// - If `poly_degree` is not a power of 2
 /// - If not enough primes can be found
-pub fn generate_primes_60(
-    poly_degree: usize,
-    bit_size: usize,
-    count: usize,
-) -> Vec<u64> {
+pub fn generate_primes_60(poly_degree: usize, bit_size: usize, count: usize) -> Vec<u64> {
     assert!(
         poly_degree.is_power_of_two(),
         "poly_degree must be a power of 2"
     );
-    assert!(
-        (2..=62).contains(&bit_size),
-        "bit_size must be in [2, 62]"
-    );
+    assert!((2..=62).contains(&bit_size), "bit_size must be in [2, 62]");
 
     let two_n = (2 * poly_degree) as u64;
     let lower = (1u64 << (bit_size - 1)) / two_n + 1;
@@ -272,8 +265,27 @@ mod tests {
     #[test]
     fn test_miller_rabin_primes() {
         let known_primes: Vec<u64> = vec![
-            2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 97, 101,
-            7681, 12289, 65537, 786433, 104857601,
+            2,
+            3,
+            5,
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            97,
+            101,
+            7681,
+            12289,
+            65537,
+            786433,
+            104857601,
             (1u64 << 61) - 1, // Mersenne prime 2^61 - 1
         ];
         for &p in &known_primes {
@@ -285,11 +297,10 @@ mod tests {
     fn test_miller_rabin_composites() {
         let composites: Vec<u64> = vec![
             0, 1, 4, 6, 8, 9, 10, 12, 15, 21, 25, 49, 100, 1000,
-            561,   // Carmichael pseudoprime (3·11·17)
-            1105,  // Carmichael pseudoprime (5·13·17)
-            1729,  // Hardy-Ramanujan number (7·13·19)
-            7680,
-            12288,
+            561,  // Carmichael pseudoprime (3·11·17)
+            1105, // Carmichael pseudoprime (5·13·17)
+            1729, // Hardy-Ramanujan number (7·13·19)
+            7680, 12288,
         ];
         for &c in &composites {
             assert!(!is_prime(c), "{c} should not be prime");

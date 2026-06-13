@@ -1,12 +1,14 @@
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId, black_box};
-use vaea_ntt::ntt32::{Ntt32Context, generate_primes_28};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use vaea_ntt::ntt32::{generate_primes_28, Ntt32Context};
 
 fn bench_forward(c: &mut Criterion) {
     let mut group = c.benchmark_group("ntt32_forward");
     for &n in &[64, 256, 1024, 4096, 8192, 16384, 32768] {
         let q = generate_primes_28(n, 1)[0];
         let ctx = Ntt32Context::new(n, q);
-        let data_orig: Vec<u32> = (0..n).map(|i| ((i as u64 * 41 + 7) % q as u64) as u32).collect();
+        let data_orig: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 41 + 7) % q as u64) as u32)
+            .collect();
 
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |b, _| {
             let mut data = data_orig.clone();
@@ -23,7 +25,9 @@ fn bench_inverse(c: &mut Criterion) {
     for &n in &[64, 256, 1024, 4096, 8192, 16384, 32768] {
         let q = generate_primes_28(n, 1)[0];
         let ctx = Ntt32Context::new(n, q);
-        let mut data: Vec<u32> = (0..n).map(|i| ((i as u64 * 41 + 7) % q as u64) as u32).collect();
+        let mut data: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 41 + 7) % q as u64) as u32)
+            .collect();
         ctx.forward(&mut data); // start in NTT domain
 
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |b, _| {
@@ -41,7 +45,9 @@ fn bench_inverse_lazy(c: &mut Criterion) {
     for &n in &[256, 1024, 4096, 8192, 32768] {
         let q = generate_primes_28(n, 1)[0];
         let ctx = Ntt32Context::new(n, q);
-        let mut data: Vec<u32> = (0..n).map(|i| ((i as u64 * 41 + 7) % q as u64) as u32).collect();
+        let mut data: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 41 + 7) % q as u64) as u32)
+            .collect();
         ctx.forward(&mut data);
 
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |b, _| {
@@ -59,8 +65,12 @@ fn bench_negacyclic_mul(c: &mut Criterion) {
     for &n in &[256, 1024, 4096, 8192, 32768] {
         let q = generate_primes_28(n, 1)[0];
         let ctx = Ntt32Context::new(n, q);
-        let a: Vec<u32> = (0..n).map(|i| ((i as u64 * 17 + 3) % q as u64) as u32).collect();
-        let b: Vec<u32> = (0..n).map(|i| ((i as u64 * 31 + 11) % q as u64) as u32).collect();
+        let a: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 17 + 3) % q as u64) as u32)
+            .collect();
+        let b: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 31 + 11) % q as u64) as u32)
+            .collect();
 
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |bench, _| {
             bench.iter(|| {
@@ -76,8 +86,12 @@ fn bench_negacyclic_mul_zero_alloc(c: &mut Criterion) {
     for &n in &[256, 1024, 4096, 8192, 32768] {
         let q = generate_primes_28(n, 1)[0];
         let ctx = Ntt32Context::new(n, q);
-        let a_orig: Vec<u32> = (0..n).map(|i| ((i as u64 * 17 + 3) % q as u64) as u32).collect();
-        let b_orig: Vec<u32> = (0..n).map(|i| ((i as u64 * 31 + 11) % q as u64) as u32).collect();
+        let a_orig: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 17 + 3) % q as u64) as u32)
+            .collect();
+        let b_orig: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 31 + 11) % q as u64) as u32)
+            .collect();
 
         // Pre-allocate all buffers outside the loop
         let mut a_buf = a_orig.clone();
@@ -105,8 +119,12 @@ fn bench_pointwise_mul(c: &mut Criterion) {
     for &n in &[1024, 4096, 8192, 32768] {
         let q = generate_primes_28(n, 1)[0];
         let ctx = Ntt32Context::new(n, q);
-        let a: Vec<u32> = (0..n).map(|i| ((i as u64 * 17 + 3) % q as u64) as u32).collect();
-        let b: Vec<u32> = (0..n).map(|i| ((i as u64 * 31 + 11) % q as u64) as u32).collect();
+        let a: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 17 + 3) % q as u64) as u32)
+            .collect();
+        let b: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 31 + 11) % q as u64) as u32)
+            .collect();
         let mut result = vec![0u32; n];
 
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |bench, _| {
@@ -131,7 +149,8 @@ fn bench_context_creation(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches,
+criterion_group!(
+    benches,
     bench_forward,
     bench_inverse,
     bench_inverse_lazy,

@@ -5,7 +5,7 @@
 //!
 //! Run: `cargo run --example mldsa_ntt`
 
-use vaea_ntt::ntt32::{Ntt32Context, generate_primes_28};
+use vaea_ntt::ntt32::{generate_primes_28, Ntt32Context};
 
 fn main() {
     // ---------------------------------------------------------------
@@ -16,7 +16,10 @@ fn main() {
 
     println!("=== VaeaNTT — ML-DSA (Dilithium) NTT Demo ===\n");
     println!("Parameters: q = {Q}, N = {N}");
-    println!("q = 2^23 - 2^13 + 1 = {Q} ({} bits)", 32 - Q.leading_zeros());
+    println!(
+        "q = 2^23 - 2^13 + 1 = {Q} ({} bits)",
+        32 - Q.leading_zeros()
+    );
 
     // Create NTT context — validates q is prime and NTT-friendly
     let ctx = Ntt32Context::new(N, Q);
@@ -49,7 +52,9 @@ fn main() {
     // ---------------------------------------------------------------
     // Negacyclic polynomial multiplication (core of ML-DSA signing)
     // ---------------------------------------------------------------
-    let a: Vec<u32> = (0..N).map(|i| ((i as u64 * 17 + 5) % Q as u64) as u32).collect();
+    let a: Vec<u32> = (0..N)
+        .map(|i| ((i as u64 * 17 + 5) % Q as u64) as u32)
+        .collect();
     let mut one = vec![0u32; N];
     one[0] = 1; // multiplicative identity
 

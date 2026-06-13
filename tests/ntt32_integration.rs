@@ -1,7 +1,7 @@
 //! Integration tests — cross-validate NTT32 pipeline against naive O(N²) computation
 //! and stress-test with randomized inputs.
 
-use vaea_ntt::ntt32::{Ntt32Context, generate_primes_28};
+use vaea_ntt::ntt32::{generate_primes_28, Ntt32Context};
 
 /// Naive O(N²) negacyclic convolution reference implementation.
 /// Computes c = a * b in Z_q[X]/(X^N + 1).
@@ -39,7 +39,10 @@ fn test_ntt32_vs_naive_n16() {
     let ntt_result = ctx.negacyclic_mul(&a, &b);
     let naive_result = naive_negacyclic_mul(&a, &b, q);
 
-    assert_eq!(ntt_result, naive_result, "NTT32 vs naive mismatch for N={n}");
+    assert_eq!(
+        ntt_result, naive_result,
+        "NTT32 vs naive mismatch for N={n}"
+    );
 }
 
 #[test]
@@ -54,7 +57,10 @@ fn test_ntt32_vs_naive_n64() {
     let ntt_result = ctx.negacyclic_mul(&a, &b);
     let naive_result = naive_negacyclic_mul(&a, &b, q);
 
-    assert_eq!(ntt_result, naive_result, "NTT32 vs naive mismatch for N={n}");
+    assert_eq!(
+        ntt_result, naive_result,
+        "NTT32 vs naive mismatch for N={n}"
+    );
 }
 
 #[test]
@@ -69,7 +75,10 @@ fn test_ntt32_vs_naive_n256() {
     let ntt_result = ctx.negacyclic_mul(&a, &b);
     let naive_result = naive_negacyclic_mul(&a, &b, q);
 
-    assert_eq!(ntt_result, naive_result, "NTT32 vs naive mismatch for N={n}");
+    assert_eq!(
+        ntt_result, naive_result,
+        "NTT32 vs naive mismatch for N={n}"
+    );
 }
 
 #[test]
@@ -83,8 +92,11 @@ fn test_ntt32_linearity() {
     let b: Vec<u32> = (0..n).map(|i| (i as u32 * 31 + 7) % q).collect();
 
     // NTT(a + b)
-    let ab_sum: Vec<u32> = a.iter().zip(b.iter())
-        .map(|(&x, &y)| ((x as u64 + y as u64) % q as u64) as u32).collect();
+    let ab_sum: Vec<u32> = a
+        .iter()
+        .zip(b.iter())
+        .map(|(&x, &y)| ((x as u64 + y as u64) % q as u64) as u32)
+        .collect();
     let mut ntt_sum = ab_sum;
     ctx.forward(&mut ntt_sum);
 
@@ -93,8 +105,11 @@ fn test_ntt32_linearity() {
     let mut ntt_b = b;
     ctx.forward(&mut ntt_a);
     ctx.forward(&mut ntt_b);
-    let sum_ntt: Vec<u32> = ntt_a.iter().zip(ntt_b.iter())
-        .map(|(&x, &y)| ((x as u64 + y as u64) % q as u64) as u32).collect();
+    let sum_ntt: Vec<u32> = ntt_a
+        .iter()
+        .zip(ntt_b.iter())
+        .map(|(&x, &y)| ((x as u64 + y as u64) % q as u64) as u32)
+        .collect();
 
     assert_eq!(ntt_sum, sum_ntt, "NTT linearity violated for N={n}");
 }
@@ -107,7 +122,9 @@ fn test_ntt32_multiple_primes_same_n() {
 
     for (idx, &q) in primes.iter().enumerate() {
         let ctx = Ntt32Context::new(n, q);
-        let original: Vec<u32> = (0..n).map(|i| ((i as u64 * 41 + 7) % q as u64) as u32).collect();
+        let original: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 41 + 7) % q as u64) as u32)
+            .collect();
         let mut data = original.clone();
 
         ctx.forward(&mut data);

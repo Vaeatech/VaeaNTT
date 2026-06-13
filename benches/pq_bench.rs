@@ -4,7 +4,7 @@
 //! ML-DSA (FIPS 204): q = 8380417, NTT size 256
 //! Falcon:            q = 12289, NTT size 512/1024
 
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId, black_box};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use vaea_ntt::ntt32::Ntt32Context;
 
 /// Post-quantum NTT parameters
@@ -12,15 +12,12 @@ const PQ_PARAMS: &[(&str, usize, u32)] = &[
     // ML-KEM: q=3329, 128-point NTT (Kyber uses incomplete NTT from 256 to 128 pairs)
     // 3329 ≡ 1 (mod 256), so 128-point negacyclic NTT works
     ("ML-KEM/q=3329/N=128", 128, 3329),
-
     // ML-DSA: q=8380417, 256-point NTT
     // 8380417 ≡ 1 (mod 512), full 256-point negacyclic NTT
     ("ML-DSA/q=8380417/N=256", 256, 8380417),
-
     // Falcon-512: q=12289, 512-point NTT
     // 12289 ≡ 1 (mod 1024), full 512-point negacyclic NTT
     ("Falcon-512/q=12289/N=512", 512, 12289),
-
     // Falcon-1024: q=12289, 1024-point NTT
     // 12289 ≡ 1 (mod 2048), full 1024-point negacyclic NTT
     ("Falcon-1024/q=12289/N=1024", 1024, 12289),
@@ -94,8 +91,12 @@ fn bench_pq_negacyclic_mul(c: &mut Criterion) {
 
     for &(name, n, q) in PQ_PARAMS {
         let ctx = Ntt32Context::new(n, q);
-        let a: Vec<u32> = (0..n).map(|i| ((i as u64 * 17 + 3) % q as u64) as u32).collect();
-        let b: Vec<u32> = (0..n).map(|i| ((i as u64 * 31 + 7) % q as u64) as u32).collect();
+        let a: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 17 + 3) % q as u64) as u32)
+            .collect();
+        let b: Vec<u32> = (0..n)
+            .map(|i| ((i as u64 * 31 + 7) % q as u64) as u32)
+            .collect();
         let mut a_buf = a.clone();
         let mut b_buf = b.clone();
         let mut result = vec![0u32; n];
@@ -116,5 +117,10 @@ fn bench_pq_negacyclic_mul(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_pq_forward, bench_pq_inverse, bench_pq_negacyclic_mul);
+criterion_group!(
+    benches,
+    bench_pq_forward,
+    bench_pq_inverse,
+    bench_pq_negacyclic_mul
+);
 criterion_main!(benches);
