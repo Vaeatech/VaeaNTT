@@ -1,6 +1,6 @@
 [package]
 name = "vaea-ntt"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 rust-version = "1.87"
 description = "High-performance Number Theoretic Transform (NTT) for post-quantum cryptography. ARM NEON SIMD native, constant-time, no_std. ML-DSA, Falcon, FHE. Dual-licensed AGPL-3.0 + commercial."

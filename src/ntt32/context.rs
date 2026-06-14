@@ -726,6 +726,59 @@ mod tests {
         );
     }
 
+    /// Exhaustive NEON-vs-scalar regression test.
+    ///
+    /// Validates that the NEON NTT path produces identical results to the
+    /// scalar path for all sizes and representative primes. This is the
+    /// permanent canary for the vqdmulhq_s32 overflow bug (N≥16384, q~2^28).
+    #[test]
+    fn test_neon_vs_scalar_exhaustive() {
+        use super::super::prime::generate_primes_28;
+
+        let sizes = [256, 1024, 4096, 8192, 16384, 32768];
+        let num_primes = 10;
+
+        for &n in &sizes {
+            let primes = generate_primes_28(n, num_primes);
+            for &q in &primes {
+                let ctx = super::Ntt32Context::new(n, q);
+
+                // Test data: deterministic pseudo-random values in [0, q)
+                let data: Vec<u32> = (0..n)
+                    .map(|i| ((i as u64 * 7 + 13) % q as u64) as u32)
+                    .collect();
+
+                // Forward NTT
+                let mut neon_fwd = data.clone();
+                let mut scalar_fwd = data.clone();
+                ctx.forward(&mut neon_fwd);
+                super::super::scalar::ntt_forward_scalar(&mut scalar_fwd, &ctx);
+                assert_eq!(
+                    neon_fwd, scalar_fwd,
+                    "NEON vs scalar FORWARD mismatch: N={n}, q={q}"
+                );
+
+                // Inverse NTT
+                let mut neon_inv = neon_fwd.clone();
+                let mut scalar_inv = scalar_fwd.clone();
+                ctx.inverse(&mut neon_inv);
+                super::super::scalar::ntt_inverse_scalar(&mut scalar_inv, &ctx);
+                assert_eq!(
+                    neon_inv, scalar_inv,
+                    "NEON vs scalar INVERSE mismatch: N={n}, q={q}"
+                );
+
+                // Roundtrip: should recover original data
+                for i in 0..n {
+                    assert_eq!(
+                        neon_inv[i] % q, data[i] % q,
+                        "Roundtrip mismatch at index {i}: N={n}, q={q}"
+                    );
+                }
+            }
+        }
+    }
+
     // Compile-time check: Ntt32Context must be Send + Sync
     // (required for safe sharing across threads in crypto applications)
     const _: () = {

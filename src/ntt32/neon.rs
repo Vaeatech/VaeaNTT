@@ -123,6 +123,11 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
         // After k butterfly stages, values grow to (2k+1)*q.
         // For vqdmulhq_s32 (signed interpretation), values must be < 2^31.
         // So: (2k+1)*q < 2^31  →  k < (2^31/q - 1) / 2
+        //
+        // Note: k is the correct interval for inter-stage growth. The butterfly
+        // output reaches (2k+3)*q, but that value is Barrett-reduced at the
+        // start of the next interval. The real danger is the transition into
+        // the fused final stages — see the pre-fusion Barrett below (line ~425).
         let barrett_interval = {
             let max_b = ((1u64 << 31) / q as u64) as u32;
             let k = max_b.saturating_sub(1) / 2;
@@ -414,8 +419,23 @@ pub fn ntt_fwd_neon(data: &mut [u32], ctx: &super::context::Ntt32Context) {
                 stages_since_reduce += 1;
             }
 
-            // Fused last 3 stages
-            if stages_since_reduce >= barrett_interval {
+            // Fused last 3 stages.
+            // CRITICAL: Barrett-reduce before entering the fused block if the
+            // accumulated unreduced stages could cause vqdmulhq_s32 overflow
+            // inside the 3-stage fusion. The fusion does 3 butterflies without
+            // reduction. Each butterfly's vqdmulhq_s32 sees the output of
+            // the previous butterfly as input. With entry value V:
+            //   Stage 1: vqdmulhq input = V (entry), output = V + 2q
+            //   Stage 2: vqdmulhq input = V + 2q, output = V + 4q
+            //   Stage 3: vqdmulhq input = V + 4q, output = V + 6q
+            // Constraint: vqdmulhq input < 2^31, i.e. V + 4q < 2^31.
+            // After k unreduced stages: V = (2k+1)*q.
+            //   k=1 → V=3q → max vqdmulhq input = 3q+4q = 7q ≈ 1.88e9 < 2^31 ✅
+            //   k=2 → V=5q → max vqdmulhq input = 5q+4q = 9q ≈ 2.41e9 > 2^31 ❌
+            // So: reduce when stages_since_reduce >= 2.
+            // Without this, 3/8 DAE primes fail at N>=16384 (268271617,
+            // 268238849, 267550721).
+            if stages_since_reduce >= 2 {
                 for j in (0..n).step_by(4) {
                     let v = vld1q_u32(data.as_ptr().add(j));
                     vst1q_u32(data.as_mut_ptr().add(j), barrett_reduce(v, q_vec, bc));
